@@ -1,0 +1,134 @@
+// =========================================================
+// REFÚGIO DAS FLORES — schema.prisma
+// Banco: Neon (Postgres serverless)
+// =========================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")      // pooled (host com -pooler)
+  directUrl = env("DIRECT_URL")        // direta, usada nas migrações
+}
+
+// ───────────────────────── Catálogo ─────────────────────────
+
+model Categoria {
+  id        String    @id @default(uuid()) @db.Uuid
+  nome      String
+  slug      String    @unique
+  titulo    String
+  subtitulo String?
+  /// Nomes alternativos aceitos no filtro do catálogo (ex.: "Presentes")
+  aliases   String[]  @default([])
+  iconeUrl  String?   @map("icone_url")
+  ordem     Int       @default(0)
+  ativa     Boolean   @default(true)
+  produtos  Produto[]
+
+  @@index([ativa, ordem])
+  @@map("categorias")
+}
+
+model Produto {
+  id          String    @id @default(uuid()) @db.Uuid
+  categoriaId String    @map("categoria_id") @db.Uuid
+  categoria   Categoria @relation(fields: [categoriaId], references: [id], onDelete: Restrict)
+
+  nome      String
+  descricao String?
+  preco     Decimal? @db.Decimal(10, 2)
+  /// Selo exibido no card ("Novo", "Mais vendido"...). Era "destaque" no script.js
+  badge     String?
+
+  imagens ProdutoImagem[]
+
+  // ── Campos de frete: lidos SOMENTE no servidor ──
+  pesoKg          Decimal  @map("peso_kg") @db.Decimal(6, 3)
+  larguraCm       Decimal  @map("largura_cm") @db.Decimal(6, 1)
+  alturaCm        Decimal  @map("altura_cm") @db.Decimal(6, 1)
+  comprimentoCm   Decimal  @map("comprimento_cm") @db.Decimal(6, 1)
+  /// Se nulo, o backend usa o preço como valor declarado
+  valorDeclarado  Decimal? @map("valor_declarado") @db.Decimal(10, 2)
+  freteHabilitado Boolean  @default(true) @map("frete_habilitado")
+  /// false = peso/dimensões ainda são estimativa herdada do site antigo.
+  /// O painel destaca esses produtos; vira true quando a cliente roda
+  /// "Testar frete" com sucesso e salva.
+  medidasVerificadas Boolean @default(false) @map("medidas_verificadas")
+  /// Produtos "a consultar" (sem preço fixo) — vão direto para o WhatsApp.
+  sobConsulta        Boolean @default(false) @map("sob_consulta")
+
+  ordem       Int      @default(0)
+  ativo       Boolean  @default(true)
+  criadoEm    DateTime @default(now()) @map("criado_em") @db.Timestamptz
+  atualizadoEm DateTime @updatedAt @map("atualizado_em") @db.Timestamptz
+
+  @@index([categoriaId, ativo, ordem])
+  @@index([ativo])
+  @@map("produtos")
+}
+
+/// Um produto pode ter várias imagens (variações de cor, ângulos).
+/// No script.js antigo isso era o array "imagens" de alguns produtos.
+model ProdutoImagem {
+  id        String  @id @default(uuid()) @db.Uuid
+  produtoId String  @map("produto_id") @db.Uuid
+  produto   Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String?
+  ordem     Int     @default(0)
+
+  @@index([produtoId, ordem])
+  @@map("produto_imagens")
+}
+
+// ───────────────────── Apoio ao admin ─────────────────────
+
+/// Modelos de caixa salvos, para a cliente selecionar em vez de
+/// redigitar dimensões a cada cadastro.
+model Embalagem {
+  id            String  @id @default(uuid()) @db.Uuid
+  nome          String
+  larguraCm     Decimal @map("largura_cm") @db.Decimal(6, 1)
+  alturaCm      Decimal @map("altura_cm") @db.Decimal(6, 1)
+  comprimentoCm Decimal @map("comprimento_cm") @db.Decimal(6, 1)
+  pesoTaraKg    Decimal @default(0) @map("peso_tara_kg") @db.Decimal(6, 3)
+
+  @@map("embalagens")
+}
+
+/// Páginas de conteúdo editáveis ("abas": Sobre, Entregas, FAQ...)
+model Pagina {
+  id            String  @id @default(uuid()) @db.Uuid
+  slug          String  @unique
+  titulo        String
+  conteudoHtml  String? @map("conteudo_html")
+  visivelNoMenu Boolean @default(true) @map("visivel_no_menu")
+  ordem         Int     @default(0)
+
+  @@map("paginas")
+}
+
+/// Configurações públicas (whatsappLoja, cepOrigem, textos do topo...)
+model Configuracao {
+  chave String @id
+  valor Json
+
+  @@map("configuracoes")
+}
+
+// ───────────────────────── Auth ─────────────────────────
+
+model Usuario {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  senhaHash String   @map("senha_hash")
+  nome      String
+  papel     String   @default("admin")
+  criadoEm  DateTime @default(now()) @map("criado_em") @db.Timestamptz
+
+  @@map("usuarios")
+}

@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Paleta herdada do site antigo: verdes suaves e off-white. */
+    --background: 40 33% 98%;
+    --foreground: 150 12% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 150 12% 18%;
+    --primary: 152 30% 32%;
+    --primary-foreground: 40 33% 98%;
+    --secondary: 150 16% 94%;
+    --secondary-foreground: 150 12% 22%;
+    --muted: 150 14% 95%;
+    --muted-foreground: 150 8% 45%;
+    --accent: 145 25% 92%;
+    --accent-foreground: 150 12% 22%;
+    --destructive: 0 72% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 150 12% 88%;
+    --input: 150 12% 88%;
+    --ring: 152 30% 32%;
+    --radius: 0.6rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
