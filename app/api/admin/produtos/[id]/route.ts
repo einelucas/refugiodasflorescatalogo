@@ -49,7 +49,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
   try {
     // Troca o conjunto de imagens em transação: evita o produto
     // ficar sem imagem nenhuma se a segunda operação falhar.
-    const produto = await db.$transaction(async (tx: typeof db) => {
+    const produto = await db.$transaction(async (tx) => {
       await tx.produtoImagem.deleteMany({ where: { produtoId: id } });
       return tx.produto.update({
         where: { id },
