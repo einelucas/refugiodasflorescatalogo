@@ -16,6 +16,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import { toast } from "sonner";
 import { Ruler, TriangleAlert, CircleCheck, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -145,17 +146,43 @@ export function FormularioProduto({
   }
 
   async function enviarFoto(arquivo: File) {
+    const tiposAceitos = ["image/jpeg", "image/png", "image/webp", "image/avif"];
+    const tamanhoMaximo = 6 * 1024 * 1024;
+
+    if (!tiposAceitos.includes(arquivo.type)) {
+      toast.error("Use uma imagem JPG, PNG, WebP ou AVIF.");
+      return;
+    }
+
+    if (arquivo.size > tamanhoMaximo) {
+      toast.error("A imagem deve ter no máximo 6 MB.");
+      return;
+    }
+
     setEnviandoFoto(true);
     try {
-      const fd = new FormData();
-      fd.append("arquivo", arquivo);
-      const r = await fetch("/api/admin/upload", { method: "POST", body: fd });
-      const d = await r.json();
-      if (!r.ok) {
-        toast.error(d.erro ?? "Falha ao enviar a imagem.");
-        return;
-      }
-      setF((a) => ({ ...a, imagens: [...a.imagens, { url: d.url, alt: a.nome }] }));
+      const extensao = arquivo.type.split("/")[1].replace("jpeg", "jpg");
+      const pathname = `produtos/${crypto.randomUUID()}.${extensao}`;
+
+      // Upload direto do navegador para o Vercel Blob. A rota
+      // /api/admin/upload apenas autentica e gera o token temporário.
+      const blob = await upload(pathname, arquivo, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+      });
+
+      setF((a) => ({
+        ...a,
+        imagens: [...a.imagens, { url: blob.url, alt: a.nome }],
+      }));
+      toast.success("Imagem enviada.");
+    } catch (erro) {
+      console.error("[upload] falha no navegador:", erro);
+      toast.error(
+        erro instanceof Error
+          ? erro.message
+          : "Não foi possível enviar a imagem. Tente novamente.",
+      );
     } finally {
       setEnviandoFoto(false);
     }
@@ -359,7 +386,7 @@ export function FormularioProduto({
                 {enviandoFoto ? "…" : "Enviar"}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,image/avif"
                   className="hidden"
                   onChange={(e) => {
                     const arq = e.target.files?.[0];
