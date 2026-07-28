@@ -1,15 +1,19 @@
-/* Listagem de produtos. Destaca os que ainda têm medidas
-   herdadas do site antigo, para a cliente saber o que revisar. */
-
 import Link from "next/link";
-import { Plus, TriangleAlert } from "lucide-react";
-import { db } from "@/lib/db";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatarBRL } from "@/lib/utils";
+import { Pencil, Plus } from "lucide-react";
+
 import { AcoesProduto } from "@/components/admin/AcoesProduto";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { db } from "@/lib/db";
+import { formatarBRL } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -22,16 +26,15 @@ export default async function ProdutosPage() {
     },
   });
 
-  const aRevisar = produtos.filter((p) => !p.medidasVerificadas).length;
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-serif text-2xl">Produtos</h1>
           <p className="text-sm text-muted-foreground">{produtos.length} cadastrados</p>
         </div>
-        <Button asChild>
+
+        <Button asChild className="w-full sm:w-auto">
           <Link href="/admin/produtos/novo">
             <Plus className="h-4 w-4" />
             Novo produto
@@ -39,35 +42,76 @@ export default async function ProdutosPage() {
         </Button>
       </div>
 
-      {aRevisar > 0 && (
-        <Alert variant="warning">
-          <TriangleAlert className="h-4 w-4" />
-          <AlertTitle>
-            {aRevisar} produto(s) com medidas não conferidas
-          </AlertTitle>
-          <AlertDescription>
-            Peso e dimensões vieram do site antigo e são estimativas — o frete cobrado pode sair
-            errado. Abra cada um, meça a caixa fechada e use &quot;Testar frete&quot; para confirmar.
-          </AlertDescription>
-        </Alert>
-      )}
+      <div className="grid gap-3 md:hidden">
+        {produtos.map((p) => (
+          <article key={p.id} className="rounded-lg border bg-background p-3 shadow-sm">
+            <div className="flex min-w-0 gap-3">
+              {p.imagens[0] ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.imagens[0].url}
+                  alt=""
+                  className="h-16 w-16 shrink-0 rounded-md border object-cover"
+                />
+              ) : (
+                <div className="h-16 w-16 shrink-0 rounded-md border bg-muted" />
+              )}
 
-      <div className="rounded-lg border bg-background">
+              <div className="min-w-0 flex-1">
+                <Link
+                  href={`/admin/produtos/${p.id}`}
+                  className="block truncate font-medium hover:underline"
+                >
+                  {p.nome}
+                </Link>
+                <p className="mt-0.5 truncate text-sm text-muted-foreground">{p.categoria.nome}</p>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {p.sobConsulta ? "A consultar" : formatarBRL(Number(p.preco))}
+                  </span>
+                  <Badge variant={p.ativo ? "success" : "secondary"}>
+                    {p.ativo ? "publicado" : "rascunho"}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              Embalagem: {Number(p.alturaCm)}×{Number(p.larguraCm)}×
+              {Number(p.comprimentoCm)} cm · {Number(p.pesoKg)} kg
+            </div>
+
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <Button asChild variant="outline" size="sm" className="flex-1">
+                <Link href={`/admin/produtos/${p.id}`}>
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Link>
+              </Button>
+              <AcoesProduto id={p.id} ativo={p.ativo} />
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden max-w-full overflow-hidden rounded-lg border bg-background md:block">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-14"></TableHead>
+              <TableHead className="w-14" />
               <TableHead>Produto</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead>Preço</TableHead>
               <TableHead>Embalagem</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-20"></TableHead>
+              <TableHead className="w-20" />
             </TableRow>
           </TableHeader>
+
           <TableBody>
             {produtos.map((p) => (
-              <TableRow key={p.id} className={!p.medidasVerificadas ? "bg-amber-50/40" : undefined}>
+              <TableRow key={p.id}>
                 <TableCell>
                   {p.imagens[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -80,12 +124,15 @@ export default async function ProdutosPage() {
                     <div className="h-10 w-10 rounded border bg-muted" />
                   )}
                 </TableCell>
+
                 <TableCell className="font-medium">
                   <Link href={`/admin/produtos/${p.id}`} className="hover:underline">
                     {p.nome}
                   </Link>
                 </TableCell>
+
                 <TableCell className="text-muted-foreground">{p.categoria.nome}</TableCell>
+
                 <TableCell>
                   {p.sobConsulta ? (
                     <span className="text-muted-foreground">a consultar</span>
@@ -93,20 +140,18 @@ export default async function ProdutosPage() {
                     formatarBRL(Number(p.preco))
                   )}
                 </TableCell>
-                <TableCell className="text-xs">
+
+                <TableCell className="whitespace-nowrap text-xs">
                   {Number(p.alturaCm)}×{Number(p.larguraCm)}×{Number(p.comprimentoCm)} cm ·{" "}
                   {Number(p.pesoKg)} kg
-                  {!p.medidasVerificadas && (
-                    <Badge variant="warning" className="ml-2 scale-90">
-                      revisar
-                    </Badge>
-                  )}
                 </TableCell>
+
                 <TableCell>
                   <Badge variant={p.ativo ? "success" : "secondary"}>
                     {p.ativo ? "publicado" : "rascunho"}
                   </Badge>
                 </TableCell>
+
                 <TableCell>
                   <AcoesProduto id={p.id} ativo={p.ativo} />
                 </TableCell>

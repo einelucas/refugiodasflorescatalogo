@@ -1,0 +1,53 @@
+.admin-shell,
+.admin-content,
+.admin-content > * {
+  min-width: 0;
+}
+
+.admin-content .overflow-auto,
+.admin-content .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+}
+
+.admin-content [role="dialog"] {
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+}
+
+.admin-content img {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  .admin-content {
+    overflow-x: hidden;
+  }
+
+  .admin-content h1 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+  }
+
+  .admin-content [role="dialog"] {
+    width: calc(100vw - 1.5rem);
+    max-width: calc(100vw - 1.5rem);
+    padding: 1rem;
+  }
+
+  .admin-content input,
+  .admin-content textarea,
+  .admin-content select {
+    max-width: 100%;
+  }
+
+  .admin-content table {
+    min-width: 680px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .admin-content {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+}
