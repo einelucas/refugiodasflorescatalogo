@@ -33,11 +33,24 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-muted/30 px-4 py-8 sm:px-6">
-      <Card className="w-full max-w-sm shadow-sm">
+    <div className="relative flex min-h-dvh items-center justify-center overflow-hidden bg-gradient-to-br from-[#fff6fb] via-[#f2e5f5] to-[#fffaf7] px-4 py-8 sm:px-6">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[#a875ae]/15 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-28 -right-16 h-80 w-80 rounded-full bg-[#d97ca8]/20 blur-3xl"
+      />
+
+      <Card className="relative w-full max-w-sm border-primary/10 shadow-lg">
         <CardHeader className="items-center px-5 text-center sm:px-6">
-          <Flower2 className="h-9 w-9 text-primary" />
-          <CardTitle className="font-serif text-xl sm:text-2xl">Refúgio das Flores</CardTitle>
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#54205f] to-[#76367f] shadow-md shadow-primary/20">
+            <Flower2 className="h-7 w-7 text-white" />
+          </div>
+          <CardTitle className="font-serif text-2xl font-medium text-primary sm:text-3xl">
+            Refúgio das Flores
+          </CardTitle>
           <p className="text-sm text-muted-foreground">Painel de administração</p>
         </CardHeader>
 

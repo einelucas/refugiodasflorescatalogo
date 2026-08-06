@@ -4,25 +4,27 @@
 
 @layer base {
   :root {
-    /* Paleta herdada do site antigo: verdes suaves e off-white. */
-    --background: 40 33% 98%;
-    --foreground: 150 12% 18%;
+    /* Paleta da marca Refúgio das Flores: rosas suaves e roxo-ameixa,
+       em linha com a paleta rf-* usada no conteúdo do site (tons de
+       #54205f/#76367f/#d97ca8 sobre fundo rosa-suave/creme). */
+    --background: 327 60% 99%;
+    --foreground: 300 18% 25%;
     --card: 0 0% 100%;
-    --card-foreground: 150 12% 18%;
-    --primary: 152 30% 32%;
-    --primary-foreground: 40 33% 98%;
-    --secondary: 150 16% 94%;
-    --secondary-foreground: 150 12% 22%;
-    --muted: 150 14% 95%;
-    --muted-foreground: 150 8% 45%;
-    --accent: 145 25% 92%;
-    --accent-foreground: 150 12% 22%;
-    --destructive: 0 72% 45%;
+    --card-foreground: 300 18% 25%;
+    --primary: 290 50% 25%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 327 60% 93%;
+    --secondary-foreground: 290 50% 25%;
+    --muted: 325 45% 97%;
+    --muted-foreground: 303 10% 40%;
+    --accent: 327 55% 94%;
+    --accent-foreground: 290 50% 25%;
+    --destructive: 350 65% 52%;
     --destructive-foreground: 0 0% 100%;
-    --border: 150 12% 88%;
-    --input: 150 12% 88%;
-    --ring: 152 30% 32%;
-    --radius: 0.6rem;
+    --border: 312 32% 89%;
+    --input: 312 32% 89%;
+    --ring: 293 40% 35%;
+    --radius: 0.85rem;
   }
 }
 
@@ -32,5 +34,6 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans), "Poppins", "Helvetica Neue", sans-serif;
   }
 }

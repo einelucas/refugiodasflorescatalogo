@@ -52,6 +52,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="admin-shell min-h-dvh min-w-0 bg-muted/30">
       <header className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur md:hidden">
+        <div className="h-[3px] bg-gradient-to-r from-[#54205f] via-[#76367f] to-[#d97ca8]" />
         <div className="flex h-14 items-center justify-between gap-3 px-3 sm:px-4">
           <button
             type="button"
@@ -76,12 +77,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <header className="hidden border-b bg-background md:block">
+        <div className="h-[3px] bg-gradient-to-r from-[#54205f] via-[#76367f] to-[#d97ca8]" />
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-5 px-4 lg:px-6">
           <Link
             href="/admin/produtos"
-            className="flex shrink-0 items-center gap-2 font-serif text-lg"
+            className="flex shrink-0 items-center gap-2 font-serif text-lg text-primary"
           >
-            <Flower2 className="h-5 w-5 text-primary" />
+            <Flower2 className="h-5 w-5" />
             Refúgio
           </Link>
 
@@ -95,7 +97,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                   href={href}
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm transition-colors ${
                     ativo
-                      ? "bg-accent font-medium text-foreground"
+                      ? "bg-primary/10 font-medium text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
@@ -149,7 +151,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                     href={href}
                     className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition-colors ${
                       ativo
-                        ? "bg-accent font-medium text-foreground"
+                        ? "bg-primary/10 font-medium text-primary"
                         : "text-muted-foreground hover:bg-accent hover:text-foreground"
                     }`}
                   >

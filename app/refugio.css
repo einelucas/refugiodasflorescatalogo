@@ -618,61 +618,59 @@
 }
 
 .public-site .expand-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 8px;
   margin-top: 4px;
 }
 
+/* "Comprar" é a ação principal do cartão: largura cheia, mais
+   forte que a secundária (peso 600, sombra própria, ícone) para
+   guiar o olho antes de "Ver Produto". */
 .public-site .btn-comprar {
-  padding: 9px 10px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--purple-soft), var(--purple-mid));
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-align: center;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.3s, transform 0.3s var(--ease-smooth), box-shadow 0.3s;
-}
-
-.public-site .btn-comprar:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(140, 63, 175, 0.35);
-}
-
-.public-site .btn-ver {
-  padding: 9px 10px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
-  color: #fff;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-align: center;
-  transition: opacity 0.3s, transform 0.3s var(--ease-smooth), box-shadow 0.3s;
-}
-
-.public-site .btn-ver:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(90,30,114,0.3); }
-
-.public-site .btn-wa-card {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 9px 10px;
+  gap: 6px;
+  padding: 11px 10px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #2ec972, #128C7E);
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid) 65%, var(--purple-soft));
   color: #fff;
-  font-size: 0.8rem;
-  font-weight: 500;
-  transition: opacity 0.3s, transform 0.3s var(--ease-smooth), box-shadow 0.3s;
+  font-size: 0.84rem;
+  font-weight: 600;
   text-align: center;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(90, 30, 114, 0.28);
+  transition: opacity 0.3s, transform 0.3s var(--ease-smooth), box-shadow 0.3s;
 }
 
-.public-site .btn-wa-card:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(37,211,102,0.35); }
-.public-site .btn-wa-card svg { width: 14px; height: 14px; fill: #fff; flex-shrink: 0; }
+.public-site .btn-comprar-icon { width: 14px; height: 14px; flex-shrink: 0; }
+
+.public-site .btn-comprar:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(90, 30, 114, 0.38);
+}
+
+/* "Ver Produto" é secundária: contorno leve, sem preenchimento
+   sólido, para não competir com o botão de compra. */
+.public-site .btn-ver {
+  padding: 9px 10px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1.5px solid rgba(90, 30, 114, 0.28);
+  color: var(--purple-deep);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-align: center;
+  transition: opacity 0.3s, transform 0.3s var(--ease-smooth), background 0.3s, border-color 0.3s;
+}
+
+.public-site .btn-ver:hover {
+  background: rgba(90, 30, 114, 0.06);
+  border-color: var(--purple-mid);
+  transform: translateY(-1px);
+}
 
 /* ── Placeholder image (no real image) ─────────────────── */
 .public-site .img-placeholder {
@@ -871,6 +869,60 @@
   flex-shrink: 0;
 }
 
+/* Ação secundária no modo "ver": leva ao formulário de compra
+   sem fechar o modal. Fica abaixo do WhatsApp, com menos peso. */
+.public-site .btn-comprar-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  margin-top: 10px;
+  border-radius: 16px;
+  background: transparent;
+  border: 1.5px solid rgba(90, 30, 114, 0.3);
+  color: var(--purple-deep);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: background 0.3s, border-color 0.3s, transform 0.3s var(--ease-smooth);
+}
+
+.public-site .btn-comprar-modal:hover {
+  background: rgba(90, 30, 114, 0.06);
+  border-color: var(--purple-mid);
+  transform: translateY(-1px);
+}
+
+.public-site .btn-comprar-modal svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+.public-site .campo-opcional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-muted);
+}
+
+.public-site .shipping-cep-atual {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
+  color: var(--text-body);
+}
+
+.public-site .mensagem-erro {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.public-site .mensagem-erro svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
 /* =========================================================
    FOOTER
    ========================================================= */
@@ -893,10 +945,82 @@
 
 .public-site .footer-inner { position: relative; z-index: 1; }
 
+/* Grade do rodapé: uma coluna centralizada no celular, três
+   colunas alinhadas à esquerda a partir do tablet — marca,
+   atendimento e páginas institucionais, em vez de tudo empilhado
+   no centro. */
+.public-site .footer-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  text-align: center;
+}
+
+.public-site .footer-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.public-site .footer-col-title {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lavender);
+  opacity: 0.85;
+}
+
+@media (min-width: 720px) {
+  .public-site .footer-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    text-align: left;
+  }
+
+  .public-site .footer-col {
+    align-items: flex-start;
+    flex: 1;
+  }
+
+  .public-site .footer-col-brand { flex: 1.3; }
+
+  .public-site .footer-grid .footer-logo-wrap,
+  .public-site .footer-grid .footer-location,
+  .public-site .footer-grid .footer-shipping {
+    justify-content: flex-start;
+  }
+
+  .public-site .footer-grid .footer-socials {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .public-site .footer-grid .footer-pages {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+  }
+}
+
 .public-site .footer-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 26px;
   gap: 8px;
 }
 
@@ -913,6 +1037,14 @@
   font-weight: 400;
   color: #fff;
   line-height: 1;
+}
+
+.public-site .footer-tagline-mini {
+  margin: -6px 0 4px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .public-site .footer-location, .public-site .footer-shipping {
@@ -941,7 +1073,6 @@
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  margin: 28px 0 24px;
 }
 
 @media (min-width: 540px) {
@@ -972,8 +1103,15 @@
   stroke-linejoin: round;
   flex-shrink: 0;
 }
-/* WhatsApp footer icon is filled */
-.public-site .social-link:nth-child(3) svg { fill: currentColor; stroke: none; }
+/* Ícone do WhatsApp é preenchido, não traçado. */
+.public-site .social-link--whatsapp svg { fill: currentColor; stroke: none; }
+
+.public-site .footer-bottom {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
 
 .public-site .footer-copy {
   font-size: 0.75rem;
@@ -1578,7 +1716,7 @@
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px 18px;
-  margin: 22px auto 0;
+  margin: 0;
 }
 
 .public-site .footer-pages a {
@@ -1701,11 +1839,6 @@
   max-height: 320px;
 }
 
-/* Evita botões apertados em cards estreitos. */
-.public-site .expand-buttons {
-  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-}
-
 /* Celulares pequenos: até 479 px. */
 @media (max-width: 479px) {
   .public-site .site-header {
@@ -1811,10 +1944,6 @@
     font-size: 0.96rem;
   }
 
-  .public-site .expand-buttons {
-    grid-template-columns: 1fr;
-  }
-
   .public-site .modal-overlay {
     padding: 0;
   }
@@ -1878,10 +2007,6 @@
 
   .public-site .category-section {
     padding-inline: 18px;
-  }
-
-  .public-site .expand-buttons {
-    grid-template-columns: 1fr;
   }
 
   .public-site .card-body {

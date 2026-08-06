@@ -71,65 +71,83 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
       <footer className="site-footer">
         <div className="footer-inner">
-          <div className="footer-logo-wrap">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/imagens/logo-refugio.svg" alt="" className="footer-flower" />
-            <p className="footer-brand">Refúgio das Flores</p>
+          <div className="footer-grid">
+            <div className="footer-col footer-col-brand">
+              <div className="footer-logo-wrap">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/imagens/logo-refugio.svg" alt="" className="footer-flower" />
+                <p className="footer-brand">Refúgio das Flores</p>
+              </div>
+              <p className="footer-tagline-mini">Flores eternas feitas à mão</p>
+
+              <p className="footer-location">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/imagens/location.png" alt="" className="footer-info-icon" />
+                Dourados - MS
+              </p>
+              <p className="footer-shipping">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/imagens/express-delivery.png" alt="" className="footer-info-icon" />
+                Enviamos para todo o Brasil
+              </p>
+            </div>
+
+            <div className="footer-col">
+              <h3 className="footer-col-title">Atendimento</h3>
+              <div className="footer-socials">
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link social-link--whatsapp"
+                >
+                  <WhatsAppIcon />
+                  WhatsApp
+                </a>
+                <a
+                  href="https://www.instagram.com/_refugiodasflores_/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                  </svg>
+                  @_refugiodasflores_
+                </a>
+                <a
+                  href="https://www.tiktok.com/@refugio.das.flores"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="social-link"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
+                  </svg>
+                  @refugio.das.flores
+                </a>
+              </div>
+            </div>
+
+            {paginas.length > 0 && (
+              <div className="footer-col">
+                <h3 className="footer-col-title">Páginas</h3>
+                <nav className="footer-pages" aria-label="Páginas institucionais">
+                  {paginas.map((pagina) => (
+                    <Link key={pagina.slug} href={`/p/${pagina.slug}`}>
+                      {pagina.titulo}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            )}
           </div>
 
-          <p className="footer-location">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/imagens/location.png" alt="" className="footer-info-icon" />
-            Dourados - MS
-          </p>
-          <p className="footer-shipping">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/imagens/express-delivery.png" alt="" className="footer-info-icon" />
-            Enviamos para todo o Brasil
-          </p>
-
-          {paginas.length > 0 && (
-            <nav className="footer-pages" aria-label="Páginas institucionais">
-              {paginas.map((pagina) => (
-                <Link key={pagina.slug} href={`/p/${pagina.slug}`}>
-                  {pagina.titulo}
-                </Link>
-              ))}
-            </nav>
-          )}
-
-          <div className="footer-socials">
-            <a
-              href="https://www.instagram.com/_refugiodasflores_/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-              </svg>
-              @_refugiodasflores_
-            </a>
-            <a
-              href="https://www.tiktok.com/@refugio.das.flores"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5" />
-              </svg>
-              @refugio.das.flores
-            </a>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="social-link">
-              <WhatsAppIcon />
-              WhatsApp
-            </a>
+          <div className="footer-bottom">
+            <p className="footer-copy">© 2026 Refúgio das Flores · Todos os direitos reservados</p>
           </div>
-
-          <p className="footer-copy">© 2026 Refúgio das Flores · Todos os direitos reservados</p>
         </div>
       </footer>
     </div>

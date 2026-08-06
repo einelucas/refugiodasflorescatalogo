@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
 
 export default {
   darkMode: ["class"],
@@ -23,5 +24,5 @@ export default {
       fontFamily: { sans: ["var(--font-sans)"], serif: ["var(--font-serif)"] }
     }
   },
-  plugins: [require("tailwindcss-animate")]
+  plugins: [tailwindcssAnimate]
 } satisfies Config;

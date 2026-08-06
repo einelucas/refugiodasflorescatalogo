@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Search, Truck, X } from "lucide-react";
-import { formatarBRL, mascararCEP } from "@/lib/utils";
+import { ChevronLeft, ChevronRight, MapPin, Search, ShoppingBag, Truck, X } from "lucide-react";
+import { formatarBRL, mascararCEP, mascararTelefone } from "@/lib/utils";
 
 type Imagem = { url: string; alt: string };
 type Produto = {
@@ -31,7 +31,16 @@ type OpcaoFrete = {
   prazoDias: number | null;
 };
 
-type ProdutoAberto = { produto: Produto; categoria: string };
+type ModoModal = "ver" | "comprar";
+type ProdutoAberto = { produto: Produto; categoria: string; modo: ModoModal };
+
+type EnderecoViaCep = {
+  logradouro?: string;
+  bairro?: string;
+  localidade?: string;
+  uf?: string;
+  erro?: boolean;
+};
 
 const ICONES_CATEGORIA: Record<string, string> = {
   buques: "/imagens/bouquet-icon.png",
@@ -55,11 +64,6 @@ function classeBadge(badge: string | null) {
   if (valor.includes("novo")) return "badge-novo";
   if (valor.includes("promocao")) return "badge-promocao";
   return "";
-}
-
-function linkWhatsAppProduto(whatsapp: string, produto: Produto) {
-  const mensagem = `Olá, tenho interesse em ${produto.nome}. Poderia me passar mais informações?`;
-  return `https://wa.me/${whatsapp}?text=${encodeURIComponent(mensagem)}`;
 }
 
 function WhatsAppIcon() {
@@ -157,10 +161,10 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
                   key={produto.id}
                   produto={produto}
                   categoria={categoria.nome}
-                  whatsapp={whatsapp}
                   expandido={expandido === produto.id}
                   onAlternar={() => setExpandido((id) => (id === produto.id ? null : produto.id))}
-                  onAbrir={() => setAberto({ produto, categoria: categoria.nome })}
+                  onAbrir={() => setAberto({ produto, categoria: categoria.nome, modo: "ver" })}
+                  onComprar={() => setAberto({ produto, categoria: categoria.nome, modo: "comprar" })}
                 />
               ))}
             </div>
@@ -193,6 +197,7 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
               produto={aberto.produto}
               categoria={aberto.categoria}
               whatsapp={whatsapp}
+              modoInicial={aberto.modo}
             />
           </div>
         </div>
@@ -226,17 +231,17 @@ function FiltroBotao({
 function CardProduto({
   produto,
   categoria,
-  whatsapp,
   expandido,
   onAlternar,
   onAbrir,
+  onComprar,
 }: {
   produto: Produto;
   categoria: string;
-  whatsapp: string;
   expandido: boolean;
   onAlternar: () => void;
   onAbrir: () => void;
+  onComprar: () => void;
 }) {
   const [indice, setIndice] = useState(0);
   const imagem = produto.imagens[indice];
@@ -313,8 +318,21 @@ function CardProduto({
       </div>
 
       <div className="card-expand" aria-hidden={!expandido}>
-        <p className="card-expand-note">Veja os detalhes ou peça diretamente pelo WhatsApp.</p>
+        <p className="card-expand-note">Veja os detalhes ou compre agora mesmo.</p>
         <div className="expand-buttons">
+          {!produto.sobConsulta && (
+            <button
+              className="btn-comprar"
+              type="button"
+              onClick={(evento) => {
+                evento.stopPropagation();
+                onComprar();
+              }}
+            >
+              <ShoppingBag className="btn-comprar-icon" aria-hidden="true" />
+              Comprar
+            </button>
+          )}
           <button
             className="btn-ver"
             type="button"
@@ -325,28 +343,6 @@ function CardProduto({
           >
             Ver Produto
           </button>
-          {!produto.sobConsulta && (
-            <button
-              className="btn-comprar"
-              type="button"
-              onClick={(evento) => {
-                evento.stopPropagation();
-                onAbrir();
-              }}
-            >
-              Comprar
-            </button>
-          )}
-          <a
-            className="btn-wa-card"
-            href={linkWhatsAppProduto(whatsapp, produto)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(evento) => evento.stopPropagation()}
-          >
-            <WhatsAppIcon />
-            Pedir
-          </a>
         </div>
       </div>
     </article>
@@ -357,11 +353,14 @@ function DetalheProduto({
   produto,
   categoria,
   whatsapp,
+  modoInicial,
 }: {
   produto: Produto;
   categoria: string;
   whatsapp: string;
+  modoInicial: ModoModal;
 }) {
+  const [modo, setModo] = useState<ModoModal>(modoInicial);
   const [indice, setIndice] = useState(0);
   const [quantidade, setQuantidade] = useState(1);
   const [cep, setCep] = useState("");
@@ -369,6 +368,18 @@ function DetalheProduto({
   const [opcoes, setOpcoes] = useState<OpcaoFrete[] | null>(null);
   const [escolhida, setEscolhida] = useState<OpcaoFrete | null>(null);
   const [erroFrete, setErroFrete] = useState<string | null>(null);
+
+  const [nomeCliente, setNomeCliente] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [rua, setRua] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+  const [statusCep, setStatusCep] = useState<"idle" | "buscando" | "sucesso" | "erro">("idle");
+  const [tentouEnviar, setTentouEnviar] = useState(false);
 
   const total = (produto.preco ?? 0) * quantidade;
   const imagem = produto.imagens[indice];
@@ -378,6 +389,63 @@ function DetalheProduto({
     setOpcoes(null);
     setEscolhida(null);
   }
+
+  async function buscarEndereco(cepDigitado: string) {
+    const limpo = cepDigitado.replace(/\D/g, "");
+    if (limpo.length !== 8) return;
+
+    setStatusCep("buscando");
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
+      const dados: EnderecoViaCep = await resposta.json();
+
+      if (!resposta.ok || dados.erro) {
+        setStatusCep("erro");
+        return;
+      }
+
+      setRua(dados.logradouro ?? "");
+      setBairro(dados.bairro ?? "");
+      setCidade(dados.localidade ?? "");
+      setEstado((dados.uf ?? "").toUpperCase());
+      setStatusCep("sucesso");
+    } catch {
+      setStatusCep("erro");
+    }
+  }
+
+  function alterarCep(valor: string) {
+    const mascarado = mascararCEP(valor);
+    setCep(mascarado);
+    setOpcoes(null);
+    setEscolhida(null);
+    if (mascarado.replace(/\D/g, "").length === 8) {
+      void buscarEndereco(mascarado);
+    } else {
+      setStatusCep("idle");
+    }
+  }
+
+  // Se o CEP já foi digitado no modo "ver" (para estimar o frete)
+  // e a pessoa decide comprar, aproveita o valor e busca o endereço.
+  useEffect(() => {
+    if (modo === "comprar" && cep.replace(/\D/g, "").length === 8 && !rua) {
+      void buscarEndereco(cep);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modo]);
+
+  const enderecoValido =
+    cep.replace(/\D/g, "").length === 8 &&
+    rua.trim().length > 0 &&
+    numero.trim().length > 0 &&
+    bairro.trim().length > 0 &&
+    cidade.trim().length > 0 &&
+    estado.trim().length === 2;
+
+  const dadosClienteValidos = nomeCliente.trim().length > 1 && telefone.replace(/\D/g, "").length >= 10;
+
+  const formularioValido = dadosClienteValidos && enderecoValido;
 
   async function calcularFrete() {
     const limpo = cep.replace(/\D/g, "");
@@ -434,6 +502,53 @@ function DetalheProduto({
     }
 
     return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
+  }
+
+  function linkPedidoCompleto() {
+    const linhas = [
+      "Olá! Gostaria de fazer um pedido:",
+      "",
+      `*Produto:* ${produto.nome}`,
+    ];
+
+    if (quantidade > 1) linhas.push(`*Quantidade:* ${quantidade}`);
+    if (!produto.sobConsulta) linhas.push(`*Valor:* ${formatarBRL(total)}`);
+
+    if (escolhida) {
+      linhas.push(
+        `*Entrega:* ${escolhida.transportadora} ${escolhida.servico} — ${formatarBRL(escolhida.preco)}` +
+          (escolhida.prazoDias != null ? ` (${escolhida.prazoDias} dia(s))` : ""),
+      );
+      if (!produto.sobConsulta) {
+        linhas.push(`*Total com frete:* ${formatarBRL(total + escolhida.preco)}`);
+      }
+    }
+
+    linhas.push(
+      "",
+      "*Endereço de entrega:*",
+      `${rua}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
+      `${bairro} — ${cidade}/${estado}`,
+      `CEP: ${mascararCEP(cep)}`,
+      "",
+      "*Dados do cliente:*",
+      `Nome: ${nomeCliente}`,
+      `Telefone: ${telefone}`,
+    );
+
+    if (observacoes.trim()) {
+      linhas.push("", `*Observações:* ${observacoes.trim()}`);
+    }
+
+    return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
+  }
+
+  function finalizarPedido() {
+    if (!formularioValido) {
+      setTentouEnviar(true);
+      return;
+    }
+    window.open(linkPedidoCompleto(), "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -506,32 +621,172 @@ function DetalheProduto({
           </div>
         )}
 
+        {modo === "comprar" && !produto.sobConsulta && (
+          <>
+            <fieldset className="form-fieldset">
+              <legend>Seus dados</legend>
+              <div className="form-group">
+                <label htmlFor="nomeCliente">Nome completo</label>
+                <input
+                  id="nomeCliente"
+                  placeholder="Seu nome"
+                  value={nomeCliente}
+                  onChange={(evento) => setNomeCliente(evento.target.value)}
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="telefoneCliente">Telefone (WhatsApp)</label>
+                <input
+                  id="telefoneCliente"
+                  type="tel"
+                  placeholder="(00) 00000-0000"
+                  value={telefone}
+                  onChange={(evento) => setTelefone(mascararTelefone(evento.target.value))}
+                />
+              </div>
+            </fieldset>
+
+            <fieldset className="form-fieldset">
+              <legend>Endereço de entrega</legend>
+              <div className="form-row">
+                <div className="form-group form-group--small">
+                  <label htmlFor="cepEntrega">CEP</label>
+                  <input
+                    id="cepEntrega"
+                    placeholder="00000-000"
+                    value={cep}
+                    onChange={(evento) => alterarCep(evento.target.value)}
+                    aria-label="CEP para entrega"
+                  />
+                </div>
+                <div className="form-group form-group--small">
+                  <label htmlFor="numeroEntrega">Número</label>
+                  <input
+                    id="numeroEntrega"
+                    placeholder="Nº"
+                    value={numero}
+                    onChange={(evento) => setNumero(evento.target.value)}
+                  />
+                </div>
+              </div>
+
+              {statusCep !== "idle" && (
+                <p
+                  className={`campo-status ${
+                    statusCep === "buscando"
+                      ? "campo-status--loading"
+                      : statusCep === "sucesso"
+                        ? "campo-status--sucesso"
+                        : "campo-status--erro"
+                  }`}
+                >
+                  {statusCep === "buscando" && "Buscando endereço…"}
+                  {statusCep === "sucesso" && "Endereço encontrado — confira os dados abaixo."}
+                  {statusCep === "erro" && "CEP não encontrado. Preencha o endereço manualmente."}
+                </p>
+              )}
+
+              <div className="form-group">
+                <label htmlFor="ruaEntrega">Rua</label>
+                <input
+                  id="ruaEntrega"
+                  placeholder="Nome da rua"
+                  value={rua}
+                  onChange={(evento) => setRua(evento.target.value)}
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group form-group--grow">
+                  <label htmlFor="bairroEntrega">Bairro</label>
+                  <input
+                    id="bairroEntrega"
+                    placeholder="Bairro"
+                    value={bairro}
+                    onChange={(evento) => setBairro(evento.target.value)}
+                  />
+                </div>
+                <div className="form-group form-group--grow">
+                  <label htmlFor="cidadeEntrega">Cidade</label>
+                  <input
+                    id="cidadeEntrega"
+                    placeholder="Cidade"
+                    value={cidade}
+                    onChange={(evento) => setCidade(evento.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group form-group--small">
+                  <label htmlFor="estadoEntrega">UF</label>
+                  <input
+                    id="estadoEntrega"
+                    placeholder="UF"
+                    maxLength={2}
+                    value={estado}
+                    onChange={(evento) => setEstado(evento.target.value.toUpperCase())}
+                  />
+                </div>
+                <div className="form-group form-group--grow">
+                  <label htmlFor="complementoEntrega">
+                    Complemento <span className="campo-opcional">(opcional)</span>
+                  </label>
+                  <input
+                    id="complementoEntrega"
+                    placeholder="Apto, bloco, referência…"
+                    value={complemento}
+                    onChange={(evento) => setComplemento(evento.target.value)}
+                  />
+                </div>
+              </div>
+            </fieldset>
+          </>
+        )}
+
         {produto.freteHabilitado && !produto.sobConsulta && (
           <section className="shipping-box">
             <h3 className="shipping-title">
               <Truck />
               Calcular entrega
             </h3>
-            <div className="shipping-input-row">
-              <input
-                className="shipping-input"
-                placeholder="00000-000"
-                value={cep}
-                onChange={(evento) => setCep(mascararCEP(evento.target.value))}
-                onKeyDown={(evento) => {
-                  if (evento.key === "Enter") calcularFrete();
-                }}
-                aria-label="CEP para entrega"
-              />
-              <button
-                type="button"
-                className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
-                onClick={calcularFrete}
-                disabled={calculando}
-              >
-                {calculando ? "Calculando" : "Calcular"}
-              </button>
-            </div>
+
+            {modo === "ver" ? (
+              <div className="shipping-input-row">
+                <input
+                  className="shipping-input"
+                  placeholder="00000-000"
+                  value={cep}
+                  onChange={(evento) => setCep(mascararCEP(evento.target.value))}
+                  onKeyDown={(evento) => {
+                    if (evento.key === "Enter") calcularFrete();
+                  }}
+                  aria-label="CEP para entrega"
+                />
+                <button
+                  type="button"
+                  className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
+                  onClick={calcularFrete}
+                  disabled={calculando}
+                >
+                  {calculando ? "Calculando" : "Calcular"}
+                </button>
+              </div>
+            ) : (
+              <div className="shipping-input-row">
+                <p className="shipping-cep-atual">
+                  {cep ? `Frete para o CEP ${mascararCEP(cep)}` : "Informe o CEP acima para calcular o frete"}
+                </p>
+                <button
+                  type="button"
+                  className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
+                  onClick={calcularFrete}
+                  disabled={calculando || cep.replace(/\D/g, "").length !== 8}
+                >
+                  {calculando ? "Calculando" : "Calcular"}
+                </button>
+              </div>
+            )}
 
             {erroFrete && <p className="mensagem-erro">{erroFrete}</p>}
 
@@ -593,10 +848,54 @@ function DetalheProduto({
           </p>
         )}
 
-        <a className="btn-whatsapp-modal" href={linkWhatsApp()} target="_blank" rel="noopener noreferrer">
-          <WhatsAppIcon />
-          Pedir pelo WhatsApp
-        </a>
+        {modo === "comprar" && !produto.sobConsulta && (
+          <fieldset className="form-fieldset">
+            <legend>
+              Observações <span className="campo-opcional">(opcional)</span>
+            </legend>
+            <div className="form-group">
+              <textarea
+                rows={3}
+                placeholder="Alguma preferência, mensagem para o cartão, horário de entrega…"
+                value={observacoes}
+                onChange={(evento) => setObservacoes(evento.target.value)}
+              />
+            </div>
+          </fieldset>
+        )}
+
+        {modo === "ver" ? (
+          <>
+            <a className="btn-whatsapp-modal" href={linkWhatsApp()} target="_blank" rel="noopener noreferrer">
+              <WhatsAppIcon />
+              Pedir pelo WhatsApp
+            </a>
+            {!produto.sobConsulta && (
+              <button type="button" className="btn-comprar-modal" onClick={() => setModo("comprar")}>
+                <ShoppingBag aria-hidden="true" />
+                Quero comprar
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {tentouEnviar && !formularioValido && (
+              <p className="mensagem-erro">
+                <MapPin aria-hidden="true" />
+                Preencha nome, telefone e endereço completo (CEP, rua, número, bairro, cidade e UF)
+                para continuar.
+              </p>
+            )}
+            <button
+              type="button"
+              className="btn-whatsapp-modal btn-enviar-pedido"
+              onClick={finalizarPedido}
+            >
+              <WhatsAppIcon />
+              Finalizar pedido pelo WhatsApp
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
