@@ -41,7 +41,6 @@
   background: rgba(253,240,247,0.82);
   color: var(--text-dark);
   min-height: 100vh;
-  overflow-x: hidden;
 }
 
 .public-site img { display: block; max-width: 100%; }
@@ -69,6 +68,35 @@
   padding: 60px 24px 70px;
   text-align: center;
   border-radius: 0 0 25px 25px;
+
+  transition: min-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.35s ease;
+}
+
+/* Ao rolar a página, o header encolhe até sumir — daí em diante
+   a busca e as categorias (já com position: sticky) assumem o
+   topo, sem exigir que a pessoa role de volta ao início. */
+.public-site .site-header.site-header--encolhido {
+  min-height: 0;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.public-site .site-header .header-inner,
+.public-site .site-header .header-glow,
+.public-site .site-header .petal {
+  transition: opacity 0.3s ease;
+}
+
+.public-site .site-header--encolhido .header-inner,
+.public-site .site-header--encolhido .header-glow,
+.public-site .site-header--encolhido .petal {
+  opacity: 0;
 }
 
 
@@ -198,34 +226,6 @@
     opacity: 0.75;
 }
 
-/* WhatsApp main button */
-.public-site .btn-whatsapp-main {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 32px;
-  border-radius: var(--radius-btn);
-  background: linear-gradient(135deg, #12723c 0%, #128C7E 100%);
-  color: #fff;
-  font-size: 0.95rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
-  box-shadow: 0 4px 24px rgba(37,211,102,0.3);
-  transition: transform 0.45s var(--ease-smooth), box-shadow 0.45s var(--ease-smooth);
-  opacity: 0;
-  animation: fadeUp 0.8s var(--ease-smooth) 0.65s forwards;
-}
-
-.public-site .btn-whatsapp-main:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 36px rgba(37,211,102,0.42);
-}
-
-.public-site .btn-whatsapp-main .wa-icon {
-  width: 22px; height: 22px;
-  fill: #fff;
-}
-
 /* Floating petals */
 .public-site .petal {
   position: absolute;
@@ -271,7 +271,7 @@
 
 .public-site .search-wrap {
   position: relative;
-  margin-bottom: 12px;
+  margin-bottom: 18px;
 }
 
 .public-site .search-icon {
@@ -869,32 +869,30 @@
   flex-shrink: 0;
 }
 
-/* Ação secundária no modo "ver": leva ao formulário de compra
-   sem fechar o modal. Fica abaixo do WhatsApp, com menos peso. */
+/* Ação principal no modo "ver": único CTA do modal, leva direto
+   ao formulário de compra sem fechar o modal. */
 .public-site .btn-comprar-modal {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
-  padding: 14px;
-  margin-top: 10px;
+  padding: 15px;
   border-radius: 16px;
-  background: transparent;
-  border: 1.5px solid rgba(90, 30, 114, 0.3);
-  color: var(--purple-deep);
-  font-size: 0.95rem;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid) 65%, var(--purple-soft));
+  color: #fff;
+  font-size: 1rem;
   font-weight: 600;
-  transition: background 0.3s, border-color 0.3s, transform 0.3s var(--ease-smooth);
+  box-shadow: 0 4px 20px rgba(90, 30, 114, 0.28);
+  transition: transform 0.4s var(--ease-smooth), box-shadow 0.4s;
 }
 
 .public-site .btn-comprar-modal:hover {
-  background: rgba(90, 30, 114, 0.06);
-  border-color: var(--purple-mid);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(90, 30, 114, 0.38);
 }
 
-.public-site .btn-comprar-modal svg { width: 18px; height: 18px; flex-shrink: 0; }
+.public-site .btn-comprar-modal svg { width: 20px; height: 20px; flex-shrink: 0; }
 
 .public-site .campo-opcional {
   font-weight: 400;
@@ -1415,6 +1413,41 @@
   line-height: 1.4;
 }
 
+/* ── Aviso de entrega local (Dourados/MS) ──────────────────
+   Cidade própria da loja: entrega feita de carro/moto, sem
+   transportadora — não faz sentido cotar frete pelos Correios. */
+.public-site .frete-local-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(140, 63, 175, 0.08);
+  border: 1px solid rgba(140, 63, 175, 0.18);
+  color: var(--text-dark);
+}
+
+.public-site .frete-local-aviso svg {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  color: var(--purple-mid);
+}
+
+.public-site .frete-local-aviso strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.88rem;
+  color: var(--purple-deep);
+}
+
+.public-site .frete-local-aviso p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-body);
+}
+
 /* ── Opções de frete ────────────────────────────────────── */
 
 .public-site .frete-opcoes {
@@ -1521,7 +1554,6 @@
 /* Ajustes da adaptação React/Next, mantendo a identidade do site original. */
 .public-site {
   min-height: 100vh;
-  overflow-x: hidden;
   background: rgba(253, 240, 247, 0.82);
   color: var(--text-dark);
   font-family: var(--font-sans), "Poppins", "Helvetica Neue", sans-serif;
@@ -1881,20 +1913,13 @@
     font-size: 0.76rem;
   }
 
-  .public-site .btn-whatsapp-main {
-    width: min(100%, 320px);
-    justify-content: center;
-    padding: 13px 18px;
-    font-size: 0.88rem;
-  }
-
   .public-site .search-filter-bar {
     padding: 12px max(14px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
     border-radius: 20px 20px 0 0;
   }
 
   .public-site .search-wrap {
-    margin-bottom: 10px;
+    margin-bottom: 16px;
   }
 
   .public-site .search-input {

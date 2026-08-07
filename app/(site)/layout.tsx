@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
+import { SiteHeader } from "@/components/site/SiteHeader";
 
 export const revalidate = 300;
 
@@ -30,42 +31,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
 
   return (
     <div className="public-site">
-      <header className="site-header">
-        <div className="header-glow" />
-        <div className="header-inner">
-          <Link href="/" className="logo-wrap" aria-label="Ir para o início">
-            <span className="logo-ring">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/imagens/logo-refugio.svg" alt="" className="logo-svg" />
-            </span>
-          </Link>
-
-          <h1 className="brand-name">Refúgio das Flores</h1>
-          <p className="brand-tagline">Flores eternas feitas à mão</p>
-          <p className="brand-sub">Buquês · Chaveiros · Presentes Personalizados</p>
-          <p className="brand-delivery">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/imagens/express-delivery.png" alt="" className="delivery-icon" />
-            Enviamos para todo o Brasil
-          </p>
-
-          <a
-            href={whatsappUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-whatsapp-main"
-          >
-            <WhatsAppIcon className="wa-icon" />
-            Falar no WhatsApp
-          </a>
-        </div>
-
-        <div className="petal petal-1">✿</div>
-        <div className="petal petal-2">✾</div>
-        <div className="petal petal-3">❀</div>
-        <div className="petal petal-4">✿</div>
-        <div className="petal petal-5">✾</div>
-      </header>
+      <SiteHeader />
 
       {children}
 

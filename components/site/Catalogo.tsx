@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, MapPin, Search, ShoppingBag, Truck, X } from "lucide-react";
+import { Car, ChevronLeft, ChevronRight, MapPin, Search, ShoppingBag, Truck, X } from "lucide-react";
 import { formatarBRL, mascararCEP, mascararTelefone } from "@/lib/utils";
 
 type Imagem = { url: string; alt: string };
@@ -368,6 +368,7 @@ function DetalheProduto({
   const [opcoes, setOpcoes] = useState<OpcaoFrete[] | null>(null);
   const [escolhida, setEscolhida] = useState<OpcaoFrete | null>(null);
   const [erroFrete, setErroFrete] = useState<string | null>(null);
+  const [freteLocal, setFreteLocal] = useState(false);
 
   const [nomeCliente, setNomeCliente] = useState("");
   const [telefone, setTelefone] = useState("");
@@ -419,6 +420,7 @@ function DetalheProduto({
     setCep(mascarado);
     setOpcoes(null);
     setEscolhida(null);
+    setFreteLocal(false);
     if (mascarado.replace(/\D/g, "").length === 8) {
       void buscarEndereco(mascarado);
     } else {
@@ -458,8 +460,32 @@ function DetalheProduto({
     setErroFrete(null);
     setOpcoes(null);
     setEscolhida(null);
+    setFreteLocal(false);
 
     try {
+      // Dourados/MS é entrega própria (carro/moto), não Correios ou
+      // transportadora — nem vale a pena cotar. Usa cidade/UF já
+      // buscados (modo comprar) ou consulta o ViaCEP na hora (modo ver).
+      let cidadeDetectada = cidade;
+      let estadoDetectado = estado;
+      if (!cidadeDetectada || !estadoDetectado) {
+        try {
+          const respostaCep = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
+          const dadosCep: EnderecoViaCep = await respostaCep.json();
+          if (!dadosCep.erro) {
+            cidadeDetectada = dadosCep.localidade ?? "";
+            estadoDetectado = (dadosCep.uf ?? "").toUpperCase();
+          }
+        } catch {
+          // Sem resposta do ViaCEP: segue para a cotação normal.
+        }
+      }
+
+      if (normalizar(cidadeDetectada) === "dourados" && estadoDetectado === "MS") {
+        setFreteLocal(true);
+        return;
+      }
+
       const resposta = await fetch("/api/calcular-frete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -522,6 +548,8 @@ function DetalheProduto({
       if (!produto.sobConsulta) {
         linhas.push(`*Total com frete:* ${formatarBRL(total + escolhida.preco)}`);
       }
+    } else if (freteLocal) {
+      linhas.push("*Entrega:* local (Dourados/MS) — combinar valor por aqui");
     }
 
     linhas.push(
@@ -757,7 +785,12 @@ function DetalheProduto({
                   className="shipping-input"
                   placeholder="00000-000"
                   value={cep}
-                  onChange={(evento) => setCep(mascararCEP(evento.target.value))}
+                  onChange={(evento) => {
+                    setCep(mascararCEP(evento.target.value));
+                    setOpcoes(null);
+                    setEscolhida(null);
+                    setFreteLocal(false);
+                  }}
                   onKeyDown={(evento) => {
                     if (evento.key === "Enter") calcularFrete();
                   }}
@@ -789,6 +822,19 @@ function DetalheProduto({
             )}
 
             {erroFrete && <p className="mensagem-erro">{erroFrete}</p>}
+
+            {freteLocal && (
+              <div className="frete-local-aviso">
+                <Car aria-hidden="true" />
+                <div>
+                  <strong>Você está em Dourados/MS!</strong>
+                  <p>
+                    Aqui a entrega é feita por nós mesmos, de carro ou moto — sem Correios ou
+                    transportadora. O valor da entrega local é combinado direto pelo WhatsApp.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {opcoes && (
               <div className="frete-opcoes">
@@ -865,18 +911,17 @@ function DetalheProduto({
         )}
 
         {modo === "ver" ? (
-          <>
+          produto.sobConsulta ? (
             <a className="btn-whatsapp-modal" href={linkWhatsApp()} target="_blank" rel="noopener noreferrer">
               <WhatsAppIcon />
               Pedir pelo WhatsApp
             </a>
-            {!produto.sobConsulta && (
-              <button type="button" className="btn-comprar-modal" onClick={() => setModo("comprar")}>
-                <ShoppingBag aria-hidden="true" />
-                Quero comprar
-              </button>
-            )}
-          </>
+          ) : (
+            <button type="button" className="btn-comprar-modal" onClick={() => setModo("comprar")}>
+              <ShoppingBag aria-hidden="true" />
+              Quero comprar
+            </button>
+          )
         ) : (
           <>
             {tentouEnviar && !formularioValido && (
