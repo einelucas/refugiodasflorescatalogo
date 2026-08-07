@@ -175,8 +175,8 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
       {categoriasVisiveis.length === 0 && (
         <div className="empty-state">
           <div className="empty-icon">🌸</div>
-          <p>Nenhum produto encontrado</p>
-          <span>Tente outro termo ou categoria</span>
+          <p>Não encontramos esse arranjo</p>
+          <span>Tente outra palavra ou escolha uma das categorias ali em cima</span>
         </div>
       )}
 
@@ -702,7 +702,12 @@ function DetalheProduto({
                         : "campo-status--erro"
                   }`}
                 >
-                  {statusCep === "buscando" && "Buscando endereço…"}
+                  {statusCep === "buscando" && (
+                    <>
+                      <span className="campo-status-spinner" aria-hidden="true" />
+                      Buscando endereço…
+                    </>
+                  )}
                   {statusCep === "sucesso" && "Endereço encontrado — confira os dados abaixo."}
                   {statusCep === "erro" && "CEP não encontrado. Preencha o endereço manualmente."}
                 </p>
@@ -913,7 +918,7 @@ function DetalheProduto({
           ) : (
             <button type="button" className="btn-comprar-modal" onClick={() => setModo("comprar")}>
               <ShoppingBag weight="bold" aria-hidden="true" />
-              Quero comprar
+              Comprar
             </button>
           )
         ) : (
@@ -931,7 +936,7 @@ function DetalheProduto({
               onClick={finalizarPedido}
             >
               <WhatsAppIcon />
-              Finalizar pedido pelo WhatsApp
+              Comprar pelo WhatsApp
             </button>
           </>
         )}

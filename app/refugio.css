@@ -562,7 +562,7 @@
   justify-content: center;
   gap: 6px;
   padding: 11px 10px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid) 65%, var(--purple-soft));
   color: #fff;
   font-size: 0.84rem;
@@ -585,7 +585,7 @@
    sólido, para não competir com o botão de compra. */
 .public-site .btn-ver {
   padding: 9px 10px;
-  border-radius: 12px;
+  border-radius: 14px;
   background: transparent;
   border: 1.5px solid rgba(90, 30, 114, 0.28);
   color: var(--purple-deep);
@@ -776,7 +776,7 @@
   gap: 10px;
   width: 100%;
   padding: 15px;
-  border-radius: 16px;
+  border-radius: 14px;
   background: linear-gradient(135deg, #2ec972 0%, #128C7E 100%);
   color: #fff;
   font-size: 1rem;
@@ -805,7 +805,7 @@
   gap: 10px;
   width: 100%;
   padding: 15px;
-  border-radius: 16px;
+  border-radius: 14px;
   background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid) 65%, var(--purple-soft));
   color: #fff;
   font-size: 1rem;
@@ -1275,6 +1275,9 @@
 .public-site #quantidadeProduto { max-width: 110px; }
 
 .public-site .campo-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.78rem;
   min-height: 1.1em;
   color: var(--text-muted);
@@ -1283,6 +1286,16 @@
 .public-site .campo-status--loading { color: var(--purple-mid); }
 .public-site .campo-status--sucesso { color: #1f9d55; }
 .public-site .campo-status--erro { color: #d1355a; }
+
+.public-site .campo-status-spinner {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border: 2px solid rgba(140, 63, 175, 0.25);
+  border-top-color: var(--purple-mid);
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
 
 /* ── Botão calcular frete ───────────────────────────────── */
 
