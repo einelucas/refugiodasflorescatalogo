@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Poppins } from "next/font/google";
+import { Fraunces, Poppins } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 import "./refugio.css";
@@ -10,9 +10,9 @@ const bodyFont = Poppins({
   variable: "--font-sans",
 });
 
-const displayFont = Cormorant_Garamond({
+const displayFont = Fraunces({
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
+  weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
   variable: "--font-serif",
 });

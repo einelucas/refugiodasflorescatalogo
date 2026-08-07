@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Car, ChevronLeft, ChevronRight, MapPin, Search, ShoppingBag, Truck, X } from "lucide-react";
+import {
+  Car,
+  CaretLeft,
+  CaretRight,
+  MapPin,
+  MagnifyingGlass,
+  ShoppingBag,
+  Truck,
+  X,
+} from "@phosphor-icons/react";
 import { formatarBRL, mascararCEP, mascararTelefone } from "@/lib/utils";
 
 type Imagem = { url: string; alt: string };
@@ -40,14 +49,6 @@ type EnderecoViaCep = {
   localidade?: string;
   uf?: string;
   erro?: boolean;
-};
-
-const ICONES_CATEGORIA: Record<string, string> = {
-  buques: "/imagens/bouquet-icon.png",
-  unitarios: "/imagens/flower-icon-black.png",
-  chaveiros: "/imagens/chaveiro-icon.png",
-  presentes: "/imagens/giftbox-icon-black.png",
-  "presentes-personalizados": "/imagens/giftbox-icon-black.png",
 };
 
 function normalizar(texto: string) {
@@ -116,7 +117,7 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
     <main className="catalog-section">
       <div className="search-filter-bar">
         <label className="search-wrap">
-          <Search className="search-icon" aria-hidden="true" />
+          <MagnifyingGlass className="search-icon" size={17} weight="bold" aria-hidden="true" />
           <input
             type="search"
             className="search-input"
@@ -136,7 +137,6 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
               key={categoria.id}
               ativo={filtro === categoria.slug}
               onClick={() => setFiltro(categoria.slug)}
-              icone={ICONES_CATEGORIA[categoria.slug]}
             >
               {categoria.nome === "Presentes Personalizados" ? "Presentes" : categoria.nome}
             </FiltroBotao>
@@ -190,7 +190,7 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
             onMouseDown={(evento) => evento.stopPropagation()}
           >
             <button className="modal-close" onClick={() => setAberto(null)} aria-label="Fechar">
-              <X />
+              <X size={16} weight="bold" />
             </button>
             <DetalheProduto
               key={aberto.produto.id}
@@ -210,19 +210,13 @@ function FiltroBotao({
   ativo,
   onClick,
   children,
-  icone,
 }: {
   ativo: boolean;
   onClick: () => void;
   children: React.ReactNode;
-  icone?: string;
 }) {
   return (
     <button className={`pill ${ativo ? "active" : ""}`} onClick={onClick} type="button">
-      {icone && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={icone} alt="" className="pill-icon" />
-      )}
       {children}
     </button>
   );
@@ -286,7 +280,7 @@ function CardProduto({
               }}
               aria-label="Imagem anterior"
             >
-              <ChevronLeft />
+              <CaretLeft size={18} weight="bold" />
             </button>
             <button
               type="button"
@@ -297,7 +291,7 @@ function CardProduto({
               }}
               aria-label="Próxima imagem"
             >
-              <ChevronRight />
+              <CaretRight size={18} weight="bold" />
             </button>
             <div className="image-dots" aria-hidden="true">
               {produto.imagens.map((_, posicao) => (
@@ -329,7 +323,7 @@ function CardProduto({
                 onComprar();
               }}
             >
-              <ShoppingBag className="btn-comprar-icon" aria-hidden="true" />
+              <ShoppingBag className="btn-comprar-icon" weight="bold" aria-hidden="true" />
               Comprar
             </button>
           )}
@@ -605,7 +599,7 @@ function DetalheProduto({
               }
               aria-label="Imagem anterior"
             >
-              <ChevronLeft />
+              <CaretLeft size={18} weight="bold" />
             </button>
             <button
               type="button"
@@ -613,7 +607,7 @@ function DetalheProduto({
               onClick={() => setIndice((atual) => (atual + 1) % produto.imagens.length)}
               aria-label="Próxima imagem"
             >
-              <ChevronRight />
+              <CaretRight size={18} weight="bold" />
             </button>
             <div className="image-dots modal-image-dots" aria-hidden="true">
               {produto.imagens.map((_, posicao) => (
@@ -775,7 +769,7 @@ function DetalheProduto({
         {produto.freteHabilitado && !produto.sobConsulta && (
           <section className="shipping-box">
             <h3 className="shipping-title">
-              <Truck />
+              <Truck weight="bold" />
               Calcular entrega
             </h3>
 
@@ -825,7 +819,7 @@ function DetalheProduto({
 
             {freteLocal && (
               <div className="frete-local-aviso">
-                <Car aria-hidden="true" />
+                <Car weight="bold" aria-hidden="true" />
                 <div>
                   <strong>Você está em Dourados/MS!</strong>
                   <p>
@@ -918,7 +912,7 @@ function DetalheProduto({
             </a>
           ) : (
             <button type="button" className="btn-comprar-modal" onClick={() => setModo("comprar")}>
-              <ShoppingBag aria-hidden="true" />
+              <ShoppingBag weight="bold" aria-hidden="true" />
               Quero comprar
             </button>
           )
@@ -926,7 +920,7 @@ function DetalheProduto({
           <>
             {tentouEnviar && !formularioValido && (
               <p className="mensagem-erro">
-                <MapPin aria-hidden="true" />
+                <MapPin weight="bold" aria-hidden="true" />
                 Preencha nome, telefone e endereço completo (CEP, rua, número, bairro, cidade e UF)
                 para continuar.
               </p>
