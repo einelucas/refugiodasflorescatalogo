@@ -119,11 +119,11 @@
 .public-site .header-inner { position: relative; z-index: 2; }
 
 /* Logo */
-.public-site .logo-wrap { display: flex; justify-content: center; margin-bottom: 28px; }
+.public-site .logo-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
 
 .public-site .logo-ring {
-  width: 130px;
-  height: 130px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
 
   background: linear-gradient(
@@ -186,7 +186,7 @@
 
   font-size: 0.82rem;
   color: rgba(255,255,255,0.75);
-  margin-bottom: 32px;
+  margin-bottom: 0;
 
   opacity: 0;
   animation: fadeUp 0.8s var(--ease-smooth) 0.55s forwards;
@@ -1809,10 +1809,10 @@
 /* Mantém a fotografia do header preenchendo e centralizada. */
 .public-site .site-header {
   display: flex;
-  min-height: clamp(500px, 42vw, 620px);
+  min-height: clamp(380px, 34vw, 480px);
   align-items: center;
   justify-content: center;
-  padding: clamp(44px, 6vw, 72px) clamp(16px, 4vw, 40px);
+  padding: clamp(32px, 4.5vw, 56px) clamp(16px, 4vw, 40px);
   background-position: center center;
   background-size: cover;
 }
@@ -1850,8 +1850,8 @@
 /* Celulares pequenos: até 479 px. */
 @media (max-width: 479px) {
   .public-site .site-header {
-    min-height: 520px;
-    padding: 40px 16px 48px;
+    min-height: 400px;
+    padding: 28px 16px 36px;
     /* Ajusta o ponto focal sem perder a centralização visual da foto. */
     background-position: 58% center;
     border-radius: 0 0 20px 20px;
@@ -1862,12 +1862,12 @@
   }
 
   .public-site .logo-wrap {
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
 
   .public-site .logo-ring {
-    width: 108px;
-    height: 108px;
+    width: 92px;
+    height: 92px;
   }
 
   .public-site .brand-name {
@@ -1885,7 +1885,7 @@
 
   .public-site .brand-delivery {
     flex-wrap: wrap;
-    margin-bottom: 24px;
+    margin-bottom: 0;
     font-size: 0.76rem;
   }
 
@@ -2002,7 +2002,7 @@
 
 @media (min-width: 480px) and (max-width: 767px) {
   .public-site .site-header {
-    min-height: 540px;
+    min-height: 420px;
     background-position: 55% center;
   }
 
@@ -2018,7 +2018,7 @@
 /* Tablets. */
 @media (min-width: 768px) {
   .public-site .site-header {
-    min-height: 570px;
+    min-height: 440px;
     background-position: center center;
   }
 
@@ -2071,7 +2071,7 @@
 /* Desktop largo. */
 @media (min-width: 1180px) {
   .public-site .site-header {
-    min-height: 600px;
+    min-height: 460px;
   }
 
   .public-site .products-grid {
@@ -2111,7 +2111,7 @@
 /* Widescreen: limita o conteúdo para não criar cards excessivamente largos. */
 @media (min-width: 1600px) {
   .public-site .site-header {
-    min-height: 620px;
+    min-height: 480px;
   }
 
   .public-site .catalog-container,
@@ -2123,21 +2123,21 @@
 /* Telas desktop baixas, como notebooks com pouca altura útil. */
 @media (min-width: 768px) and (max-height: 720px) {
   .public-site .site-header {
-    min-height: 520px;
-    padding-block: 40px;
+    min-height: 380px;
+    padding-block: 28px;
   }
 
   .public-site .logo-ring {
-    width: 112px;
-    height: 112px;
+    width: 96px;
+    height: 96px;
   }
 
   .public-site .logo-wrap {
-    margin-bottom: 20px;
+    margin-bottom: 14px;
   }
 
   .public-site .brand-delivery {
-    margin-bottom: 22px;
+    margin-bottom: 0;
   }
 }
 
