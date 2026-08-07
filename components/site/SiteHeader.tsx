@@ -1,27 +1,75 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 
-// Depois desse tanto de scroll (em px) o header some, dando lugar
-// à barra de busca fixa no topo — sem precisar rolar a página
-// inteira de novo pra achar o campo de pesquisa.
-const LIMIAR_SCROLL = 80;
+// Distância de scroll (em px) até o header terminar de encolher.
+// Curta o suficiente pra busca virar sticky rápido, longa o
+// suficiente pra não parecer um corte abrupto.
+const DISTANCIA_COLAPSO = 220;
 
 export function SiteHeader() {
-  const [encolhido, setEncolhido] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const alturaCheiaRef = useRef(0);
+  const paddingCheiaRef = useRef({ topo: 0, base: 0 });
 
   useEffect(() => {
-    function aoRolar() {
-      setEncolhido(window.scrollY > LIMIAR_SCROLL);
+    const header = headerRef.current;
+    if (!header) return;
+
+    let quadroAgendado = false;
+
+    function aplicarProgresso() {
+      quadroAgendado = false;
+      const progresso = Math.min(1, Math.max(0, window.scrollY / DISTANCIA_COLAPSO));
+      const fator = 1 - progresso;
+      // O padding não encolhe sozinho com max-height (não é
+      // "conteúdo"), então sem interpolar ele também a caixa nunca
+      // fica menor que padding-top + padding-bottom somados.
+      header!.style.maxHeight = `${alturaCheiaRef.current * fator}px`;
+      header!.style.paddingTop = `${paddingCheiaRef.current.topo * fator}px`;
+      header!.style.paddingBottom = `${paddingCheiaRef.current.base * fator}px`;
+      header!.style.opacity = String(fator);
     }
-    aoRolar();
+
+    // Mede a altura e o padding "cheios" que os clamps responsivos
+    // do CSS dariam ao header, tirando por um instante o controle
+    // que o JS aplica (senão mediríamos os valores já encolhidos).
+    // Refeito no resize pra acompanhar mudança de viewport/orientação.
+    function medirAlturaCheia() {
+      header!.style.minHeight = "";
+      header!.style.maxHeight = "none";
+      header!.style.paddingTop = "";
+      header!.style.paddingBottom = "";
+      const estilo = getComputedStyle(header!);
+      paddingCheiaRef.current = {
+        topo: parseFloat(estilo.paddingTop),
+        base: parseFloat(estilo.paddingBottom),
+      };
+      alturaCheiaRef.current = header!.getBoundingClientRect().height;
+      header!.style.minHeight = "0px";
+      aplicarProgresso();
+    }
+
+    function aoRolar() {
+      if (!quadroAgendado) {
+        quadroAgendado = true;
+        requestAnimationFrame(aplicarProgresso);
+      }
+    }
+
+    medirAlturaCheia();
+
     window.addEventListener("scroll", aoRolar, { passive: true });
-    return () => window.removeEventListener("scroll", aoRolar);
+    window.addEventListener("resize", medirAlturaCheia, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", aoRolar);
+      window.removeEventListener("resize", medirAlturaCheia);
+    };
   }, []);
 
   return (
-    <header className={`site-header ${encolhido ? "site-header--encolhido" : ""}`}>
+    <header ref={headerRef} className="site-header">
       <div className="header-glow" />
       <div className="header-inner">
         <Link href="/" className="logo-wrap" aria-label="Ir para o início">

@@ -68,36 +68,12 @@
   padding: 60px 24px 70px;
   text-align: center;
   border-radius: 0 0 25px 25px;
-
-  transition: min-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    padding 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 0.35s ease;
 }
 
-/* Ao rolar a página, o header encolhe até sumir — daí em diante
-   a busca e as categorias (já com position: sticky) assumem o
-   topo, sem exigir que a pessoa role de volta ao início. */
-.public-site .site-header.site-header--encolhido {
-  min-height: 0;
-  max-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.public-site .site-header .header-inner,
-.public-site .site-header .header-glow,
-.public-site .site-header .petal {
-  transition: opacity 0.3s ease;
-}
-
-.public-site .site-header--encolhido .header-inner,
-.public-site .site-header--encolhido .header-glow,
-.public-site .site-header--encolhido .petal {
-  opacity: 0;
-}
+/* Encolhimento fica 1:1 com o scroll (max-height e opacity
+   escritos via JS a cada frame em SiteHeader.tsx) — de propósito
+   sem transition aqui, senão o CSS fica "correndo atrás" do valor
+   real e o movimento parece puxado em vez de acompanhar o dedo. */
 
 
 /* Filtro escuro sobre a imagem */
