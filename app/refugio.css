@@ -254,6 +254,11 @@
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 2px;
+  /* Esmaece a borda direita pra dar a entender que dá pra arrastar
+     e ver mais categorias — sem isso a última pill corta seca na
+     tela e parece que acabou ali. */
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
 }
 
 .public-site .filter-pills::-webkit-scrollbar {
@@ -476,8 +481,10 @@
 }
 
 .public-site .badge-novo {
-  /* Rosa da paleta em vez do verde genérico de "novidade". */
-  background: rgba(217,124,168,0.85);
+  /* Rosa da paleta em vez do verde genérico de "novidade" — mais
+     escuro que o tom original pra o texto branco passar no
+     contraste WCAG AA (a versão mais clara media ~2.8:1). */
+  background: rgba(158,58,104,0.88);
   color: rgba(255,255,255,0.95);
 }
 
@@ -704,6 +711,27 @@
 
 .public-site .modal-close:hover { background: rgba(90,30,114,0.16); }
 .public-site .modal-close svg {
+  width: 16px; height: 16px;
+  color: var(--purple-deep);
+}
+
+.public-site .modal-share {
+  position: absolute;
+  top: 14px;
+  right: 58px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(90,30,114,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background 0.2s;
+}
+
+.public-site .modal-share:hover { background: rgba(90,30,114,0.16); }
+.public-site .modal-share svg {
   width: 16px; height: 16px;
   color: var(--purple-deep);
 }

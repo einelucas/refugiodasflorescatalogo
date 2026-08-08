@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import {
   Car,
   CaretLeft,
   CaretRight,
   MapPin,
   MagnifyingGlass,
+  ShareNetwork,
   ShoppingBag,
   Truck,
   X,
 } from "@phosphor-icons/react";
+import { toast } from "sonner";
 import { formatarBRL, mascararCEP, mascararTelefone } from "@/lib/utils";
 
 type Imagem = { url: string; alt: string };
@@ -67,6 +70,33 @@ function classeBadge(badge: string | null) {
   return "";
 }
 
+/// Compartilha o link direto do produto (?produto=<id>, lido por
+/// Catalogo pra reabrir o modal certo, e por generateMetadata pra
+/// gerar a prévia com foto/preço quando colado no WhatsApp).
+async function compartilharProduto(produto: Produto) {
+  const url = `${window.location.origin}/?produto=${produto.id}`;
+  const texto = produto.sobConsulta ? produto.nome : `${produto.nome} — ${formatarBRL(produto.preco)}`;
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: `${produto.nome} — Refúgio das Flores`, text: texto, url });
+      return;
+    } catch (erro) {
+      // Cancelar o painel de compartilhamento do navegador não é erro
+      // — qualquer outra falha cai pro link copiado, pra sempre dar
+      // algum feedback em vez de não fazer nada silenciosamente.
+      if ((erro as Error)?.name === "AbortError") return;
+    }
+  }
+
+  try {
+    await navigator.clipboard.writeText(url);
+    toast.success("Link do produto copiado!");
+  } catch {
+    toast.error("Não foi possível copiar o link.");
+  }
+}
+
 function WhatsAppIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -75,11 +105,46 @@ function WhatsAppIcon() {
   );
 }
 
-export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; whatsapp: string }) {
+export function Catalogo({
+  categorias,
+  whatsapp,
+  produtoInicialId,
+}: {
+  categorias: Categoria[];
+  whatsapp: string;
+  produtoInicialId?: string;
+}) {
   const [filtro, setFiltro] = useState("todas");
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState<string | null>(null);
   const [aberto, setAberto] = useState<ProdutoAberto | null>(null);
+
+  // Link direto pra um produto (?produto=<id>, ex.: compartilhado pelo
+  // WhatsApp): abre o modal desse item assim que a página carrega.
+  useEffect(() => {
+    if (!produtoInicialId) return;
+    for (const categoria of categorias) {
+      const produto = categoria.produtos.find((p) => p.id === produtoInicialId);
+      if (produto) {
+        setAberto({ produto, categoria: categoria.nome, modo: "ver" });
+        break;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Mantém a URL em sincronia com o modal aberto, pra dar pra
+  // compartilhar/atualizar a página no produto certo — sem navegar de
+  // verdade (evita refetch do server component a cada abrir/fechar).
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (aberto) {
+      url.searchParams.set("produto", aberto.produto.id);
+    } else {
+      url.searchParams.delete("produto");
+    }
+    window.history.replaceState(null, "", url);
+  }, [aberto]);
 
   const categoriasVisiveis = useMemo(() => {
     const termo = normalizar(busca);
@@ -189,6 +254,13 @@ export function Catalogo({ categorias, whatsapp }: { categorias: Categoria[]; wh
             aria-label={`Detalhes de ${aberto.produto.nome}`}
             onMouseDown={(evento) => evento.stopPropagation()}
           >
+            <button
+              className="modal-share"
+              onClick={() => compartilharProduto(aberto.produto)}
+              aria-label="Compartilhar produto"
+            >
+              <ShareNetwork size={16} weight="bold" />
+            </button>
             <button className="modal-close" onClick={() => setAberto(null)} aria-label="Fechar">
               <X size={16} weight="bold" />
             </button>
@@ -263,8 +335,12 @@ function CardProduto({
         )}
 
         {imagem ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imagem.url} alt={imagem.alt} loading="lazy" />
+          <Image
+            src={imagem.url}
+            alt={imagem.alt}
+            fill
+            sizes="(min-width: 1180px) 23vw, (min-width: 640px) 30vw, 45vw"
+          />
         ) : (
           <div className="img-placeholder">🌸</div>
         )}
@@ -577,8 +653,12 @@ function DetalheProduto({
     <div className="product-detail">
       <div className="modal-img-wrap">
         {imagem ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imagem.url} alt={imagem.alt} />
+          <Image
+            src={imagem.url}
+            alt={imagem.alt}
+            fill
+            sizes="(min-width: 1180px) 560px, 92vw"
+          />
         ) : (
           <div className="img-placeholder">🌸</div>
         )}
