@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { Flower2 } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -46,7 +45,8 @@ export default function LoginPage() {
       <Card className="relative w-full max-w-sm border-primary/10 shadow-lg">
         <CardHeader className="items-center px-5 text-center sm:px-6">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#54205f] to-[#76367f] shadow-md shadow-primary/20">
-            <Flower2 className="h-7 w-7 text-white" />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/imagens/logo-refugio.svg" alt="" className="h-full w-full" />
           </div>
           <CardTitle className="font-serif text-2xl font-medium text-primary sm:text-3xl">
             Refúgio das Flores

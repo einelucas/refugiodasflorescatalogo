@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Box,
+  ExternalLink,
   FileText,
-  Flower2,
   FolderTree,
   Menu,
   Package,
@@ -21,6 +21,19 @@ const NAV = [
   { href: "/admin/paginas", rotulo: "Páginas", Icone: FileText },
   { href: "/admin/embalagens", rotulo: "Embalagens", Icone: Box },
 ];
+
+const URL_CATALOGO = "https://refugiodasflorescatalogo.vercel.app";
+
+function LogoMarca({ className = "h-7 w-7" }: { className?: string }) {
+  return (
+    <span
+      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#54205f] to-[#76367f] shadow-sm shadow-primary/20 ${className}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/imagens/logo-refugio.svg" alt="" className="h-full w-full" />
+    </span>
+  );
+}
 
 function itemAtivo(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -68,11 +81,19 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             href="/admin/produtos"
             className="flex min-w-0 items-center gap-2 font-serif text-base font-medium"
           >
-            <Flower2 className="h-5 w-5 shrink-0 text-primary" />
+            <LogoMarca />
             <span className="truncate">Refúgio das Flores</span>
           </Link>
 
-          <div className="w-10" aria-hidden="true" />
+          <a
+            href={URL_CATALOGO}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border bg-background text-foreground transition-colors hover:bg-accent"
+            aria-label="Abrir catálogo em uma nova aba"
+          >
+            <ExternalLink className="h-5 w-5" />
+          </a>
         </div>
       </header>
 
@@ -83,7 +104,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             href="/admin/produtos"
             className="flex shrink-0 items-center gap-2 font-serif text-lg text-primary"
           >
-            <Flower2 className="h-5 w-5" />
+            <LogoMarca />
             Refúgio
           </Link>
 
@@ -108,6 +129,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             })}
           </nav>
 
+          <a
+            href={URL_CATALOGO}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex shrink-0 items-center gap-1.5 rounded-md border border-primary/20 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/5"
+          >
+            <ExternalLink className="h-4 w-4" />
+            Ver catálogo
+          </a>
+
           <SairButton />
         </div>
       </header>
@@ -127,7 +158,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 href="/admin/produtos"
                 className="flex min-w-0 items-center gap-2 font-serif text-lg"
               >
-                <Flower2 className="h-5 w-5 shrink-0 text-primary" />
+                <LogoMarca />
                 <span className="truncate">Refúgio das Flores</span>
               </Link>
 
@@ -162,7 +193,16 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            <div className="border-t pt-4">
+            <div className="space-y-2 border-t pt-4">
+              <a
+                href={URL_CATALOGO}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-primary transition-colors hover:bg-accent"
+              >
+                <ExternalLink className="h-5 w-5 shrink-0" />
+                Ver catálogo
+              </a>
               <SairButton />
             </div>
           </aside>
