@@ -38,8 +38,7 @@ export async function POST(request: Request) {
     parsed.data;
 
   const resultado = await cotarFrete({
-    dimensoes: { pesoKg, alturaCm, larguraCm, comprimentoCm },
-    quantidade,
+    itens: [{ dimensoes: { pesoKg, alturaCm, larguraCm, comprimentoCm }, quantidade }],
     valorDeclarado: Number((valorDeclarado * quantidade).toFixed(2)),
     cepDestino,
   });

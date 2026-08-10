@@ -31,11 +31,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const { produtoId, quantidade, cepDestino } = parsed.data;
+    const { itens, cepDestino } = parsed.data;
 
-    const produto = await db.produto.findFirst({
-      where: { id: produtoId, ativo: true },
+    const produtos = await db.produto.findMany({
+      where: { id: { in: itens.map((item) => item.produtoId) }, ativo: true },
       select: {
+        id: true,
         pesoKg: true,
         alturaCm: true,
         larguraCm: true,
@@ -46,29 +47,43 @@ export async function POST(request: Request) {
         sobConsulta: true,
       },
     });
+    const porId = new Map(produtos.map((produto) => [produto.id, produto]));
 
-    if (!produto) {
-      return Response.json({ erro: "Produto não encontrado." }, { status: 404 });
+    for (const item of itens) {
+      const produto = porId.get(item.produtoId);
+      if (!produto) {
+        return Response.json({ erro: "Produto não encontrado." }, { status: 404 });
+      }
+      if (produto.sobConsulta || !produto.freteHabilitado) {
+        return Response.json(
+          { erro: "Este produto é sob consulta. Fale conosco pelo WhatsApp para combinar o envio." },
+          { status: 400 },
+        );
+      }
     }
 
-    if (produto.sobConsulta || !produto.freteHabilitado) {
-      return Response.json(
-        { erro: "Este produto é sob consulta. Fale conosco pelo WhatsApp para combinar o envio." },
-        { status: 400 },
-      );
-    }
+    const itensFrete = itens.map((item) => {
+      const produto = porId.get(item.produtoId)!;
+      return {
+        dimensoes: {
+          pesoKg: Number(produto.pesoKg),
+          alturaCm: Number(produto.alturaCm),
+          larguraCm: Number(produto.larguraCm),
+          comprimentoCm: Number(produto.comprimentoCm),
+        },
+        quantidade: item.quantidade,
+      };
+    });
 
-    const unitario = Number(produto.valorDeclarado ?? produto.preco ?? 0);
+    const valorDeclarado = itens.reduce((soma, item) => {
+      const produto = porId.get(item.produtoId)!;
+      const unitario = Number(produto.valorDeclarado ?? produto.preco ?? 0);
+      return soma + unitario * item.quantidade;
+    }, 0);
 
     const resultado = await cotarFrete({
-      dimensoes: {
-        pesoKg: Number(produto.pesoKg),
-        alturaCm: Number(produto.alturaCm),
-        larguraCm: Number(produto.larguraCm),
-        comprimentoCm: Number(produto.comprimentoCm),
-      },
-      quantidade,
-      valorDeclarado: Number((unitario * quantidade).toFixed(2)),
+      itens: itensFrete,
+      valorDeclarado: Number(valorDeclarado.toFixed(2)),
       cepDestino,
     });
 

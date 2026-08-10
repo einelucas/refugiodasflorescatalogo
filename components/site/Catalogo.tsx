@@ -8,13 +8,27 @@ import {
   CaretRight,
   MapPin,
   MagnifyingGlass,
+  Minus,
+  Plus,
   ShareNetwork,
   ShoppingBag,
+  ShoppingCart,
+  Trash,
   Truck,
   X,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
 import { formatarBRL, mascararCEP, mascararTelefone } from "@/lib/utils";
+import { useCarrinho } from "./CarrinhoContext";
+
+/// Placeholder borrado enquanto a foto real carrega — mesmo degradê
+/// rosa/lavanda usado no fundo dos cards, só que como blur em vez de
+/// aparecer/sumir seco.
+const PLACEHOLDER_BLUR =
+  "data:image/svg+xml;charset=utf-8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5DDEB"/><stop offset="1" stop-color="#D9B3D9"/></linearGradient></defs><rect width="12" height="12" fill="url(#g)"/></svg>`,
+  );
 
 type Imagem = { url: string; alt: string };
 type Produto = {
@@ -43,8 +57,7 @@ type OpcaoFrete = {
   prazoDias: number | null;
 };
 
-type ModoModal = "ver" | "comprar";
-type ProdutoAberto = { produto: Produto; categoria: string; modo: ModoModal };
+type ProdutoAberto = { produto: Produto; categoria: string };
 
 type EnderecoViaCep = {
   logradouro?: string;
@@ -118,6 +131,7 @@ export function Catalogo({
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState<string | null>(null);
   const [aberto, setAberto] = useState<ProdutoAberto | null>(null);
+  const { adicionar, abrirCarrinho } = useCarrinho();
 
   // Link direto pra um produto (?produto=<id>, ex.: compartilhado pelo
   // WhatsApp): abre o modal desse item assim que a página carrega.
@@ -126,10 +140,17 @@ export function Catalogo({
     for (const categoria of categorias) {
       const produto = categoria.produtos.find((p) => p.id === produtoInicialId);
       if (produto) {
-        setAberto({ produto, categoria: categoria.nome, modo: "ver" });
-        break;
+        setAberto({ produto, categoria: categoria.nome });
+        return;
       }
     }
+    // Não achou: o link é de um produto que já saiu do catálogo
+    // (despublicado ou removido) — avisa em vez de não fazer nada.
+    // Adiado: nesse primeiro efeito da página, o <Toaster> (renderizado
+    // depois de {children} no layout) ainda pode não ter se inscrito
+    // pra receber toasts — chamar direto perde o aviso.
+    const id = setTimeout(() => toast.error("Esse produto não está mais disponível."), 0);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -228,8 +249,17 @@ export function Catalogo({
                   categoria={categoria.nome}
                   expandido={expandido === produto.id}
                   onAlternar={() => setExpandido((id) => (id === produto.id ? null : produto.id))}
-                  onAbrir={() => setAberto({ produto, categoria: categoria.nome, modo: "ver" })}
-                  onComprar={() => setAberto({ produto, categoria: categoria.nome, modo: "comprar" })}
+                  onAbrir={() => setAberto({ produto, categoria: categoria.nome })}
+                  onComprar={() => {
+                    adicionar(produto.id, 1);
+                    abrirCarrinho();
+                  }}
+                  onAdicionarCarrinho={() => {
+                    adicionar(produto.id, 1);
+                    toast.success(`${produto.nome} adicionado ao carrinho!`, {
+                      action: { label: "Ver carrinho", onClick: () => abrirCarrinho() },
+                    });
+                  }}
                 />
               ))}
             </div>
@@ -269,11 +299,13 @@ export function Catalogo({
               produto={aberto.produto}
               categoria={aberto.categoria}
               whatsapp={whatsapp}
-              modoInicial={aberto.modo}
+              aoFechar={() => setAberto(null)}
             />
           </div>
         </div>
       )}
+
+      <CarrinhoDrawer categorias={categorias} whatsapp={whatsapp} />
     </main>
   );
 }
@@ -301,6 +333,7 @@ function CardProduto({
   onAlternar,
   onAbrir,
   onComprar,
+  onAdicionarCarrinho,
 }: {
   produto: Produto;
   categoria: string;
@@ -308,6 +341,7 @@ function CardProduto({
   onAlternar: () => void;
   onAbrir: () => void;
   onComprar: () => void;
+  onAdicionarCarrinho: () => void;
 }) {
   const [indice, setIndice] = useState(0);
   const imagem = produto.imagens[indice];
@@ -340,6 +374,8 @@ function CardProduto({
             alt={imagem.alt}
             fill
             sizes="(min-width: 1180px) 23vw, (min-width: 640px) 30vw, 45vw"
+            placeholder="blur"
+            blurDataURL={PLACEHOLDER_BLUR}
           />
         ) : (
           <div className="img-placeholder">🌸</div>
@@ -391,17 +427,30 @@ function CardProduto({
         <p className="card-expand-note">Veja os detalhes ou compre agora mesmo.</p>
         <div className="expand-buttons">
           {!produto.sobConsulta && (
-            <button
-              className="btn-comprar"
-              type="button"
-              onClick={(evento) => {
-                evento.stopPropagation();
-                onComprar();
-              }}
-            >
-              <ShoppingBag className="btn-comprar-icon" weight="bold" aria-hidden="true" />
-              Comprar
-            </button>
+            <>
+              <button
+                className="btn-comprar"
+                type="button"
+                onClick={(evento) => {
+                  evento.stopPropagation();
+                  onComprar();
+                }}
+              >
+                <ShoppingBag className="btn-comprar-icon" weight="bold" aria-hidden="true" />
+                Comprar
+              </button>
+              <button
+                className="btn-add-carrinho"
+                type="button"
+                onClick={(evento) => {
+                  evento.stopPropagation();
+                  onAdicionarCarrinho();
+                }}
+              >
+                <ShoppingCart weight="bold" aria-hidden="true" />
+                Adicionar ao carrinho
+              </button>
+            </>
           )}
           <button
             className="btn-ver"
@@ -423,14 +472,13 @@ function DetalheProduto({
   produto,
   categoria,
   whatsapp,
-  modoInicial,
+  aoFechar,
 }: {
   produto: Produto;
   categoria: string;
   whatsapp: string;
-  modoInicial: ModoModal;
+  aoFechar: () => void;
 }) {
-  const [modo, setModo] = useState<ModoModal>(modoInicial);
   const [indice, setIndice] = useState(0);
   const [quantidade, setQuantidade] = useState(1);
   const [cep, setCep] = useState("");
@@ -439,18 +487,7 @@ function DetalheProduto({
   const [escolhida, setEscolhida] = useState<OpcaoFrete | null>(null);
   const [erroFrete, setErroFrete] = useState<string | null>(null);
   const [freteLocal, setFreteLocal] = useState(false);
-
-  const [nomeCliente, setNomeCliente] = useState("");
-  const [telefone, setTelefone] = useState("");
-  const [rua, setRua] = useState("");
-  const [numero, setNumero] = useState("");
-  const [complemento, setComplemento] = useState("");
-  const [bairro, setBairro] = useState("");
-  const [cidade, setCidade] = useState("");
-  const [estado, setEstado] = useState("");
-  const [observacoes, setObservacoes] = useState("");
-  const [statusCep, setStatusCep] = useState<"idle" | "buscando" | "sucesso" | "erro">("idle");
-  const [tentouEnviar, setTentouEnviar] = useState(false);
+  const { adicionar, abrirCarrinho } = useCarrinho();
 
   const total = (produto.preco ?? 0) * quantidade;
   const imagem = produto.imagens[indice];
@@ -461,63 +498,19 @@ function DetalheProduto({
     setEscolhida(null);
   }
 
-  async function buscarEndereco(cepDigitado: string) {
-    const limpo = cepDigitado.replace(/\D/g, "");
-    if (limpo.length !== 8) return;
-
-    setStatusCep("buscando");
-    try {
-      const resposta = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
-      const dados: EnderecoViaCep = await resposta.json();
-
-      if (!resposta.ok || dados.erro) {
-        setStatusCep("erro");
-        return;
-      }
-
-      setRua(dados.logradouro ?? "");
-      setBairro(dados.bairro ?? "");
-      setCidade(dados.localidade ?? "");
-      setEstado((dados.uf ?? "").toUpperCase());
-      setStatusCep("sucesso");
-    } catch {
-      setStatusCep("erro");
-    }
+  function adicionarAoCarrinho() {
+    adicionar(produto.id, quantidade);
+    toast.success(`${produto.nome} adicionado ao carrinho!`, {
+      action: { label: "Ver carrinho", onClick: () => abrirCarrinho() },
+    });
+    aoFechar();
   }
 
-  function alterarCep(valor: string) {
-    const mascarado = mascararCEP(valor);
-    setCep(mascarado);
-    setOpcoes(null);
-    setEscolhida(null);
-    setFreteLocal(false);
-    if (mascarado.replace(/\D/g, "").length === 8) {
-      void buscarEndereco(mascarado);
-    } else {
-      setStatusCep("idle");
-    }
+  function comprarAgora() {
+    adicionar(produto.id, quantidade);
+    aoFechar();
+    abrirCarrinho();
   }
-
-  // Se o CEP já foi digitado no modo "ver" (para estimar o frete)
-  // e a pessoa decide comprar, aproveita o valor e busca o endereço.
-  useEffect(() => {
-    if (modo === "comprar" && cep.replace(/\D/g, "").length === 8 && !rua) {
-      void buscarEndereco(cep);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [modo]);
-
-  const enderecoValido =
-    cep.replace(/\D/g, "").length === 8 &&
-    rua.trim().length > 0 &&
-    numero.trim().length > 0 &&
-    bairro.trim().length > 0 &&
-    cidade.trim().length > 0 &&
-    estado.trim().length === 2;
-
-  const dadosClienteValidos = nomeCliente.trim().length > 1 && telefone.replace(/\D/g, "").length >= 10;
-
-  const formularioValido = dadosClienteValidos && enderecoValido;
 
   async function calcularFrete() {
     const limpo = cep.replace(/\D/g, "");
@@ -534,21 +527,19 @@ function DetalheProduto({
 
     try {
       // Dourados/MS é entrega própria (carro/moto), não Correios ou
-      // transportadora — nem vale a pena cotar. Usa cidade/UF já
-      // buscados (modo comprar) ou consulta o ViaCEP na hora (modo ver).
-      let cidadeDetectada = cidade;
-      let estadoDetectado = estado;
-      if (!cidadeDetectada || !estadoDetectado) {
-        try {
-          const respostaCep = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
-          const dadosCep: EnderecoViaCep = await respostaCep.json();
-          if (!dadosCep.erro) {
-            cidadeDetectada = dadosCep.localidade ?? "";
-            estadoDetectado = (dadosCep.uf ?? "").toUpperCase();
-          }
-        } catch {
-          // Sem resposta do ViaCEP: segue para a cotação normal.
+      // transportadora — nem vale a pena cotar. Consulta o ViaCEP só
+      // pra saber a cidade e decidir se cai no caso local.
+      let cidadeDetectada = "";
+      let estadoDetectado = "";
+      try {
+        const respostaCep = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
+        const dadosCep: EnderecoViaCep = await respostaCep.json();
+        if (!dadosCep.erro) {
+          cidadeDetectada = dadosCep.localidade ?? "";
+          estadoDetectado = (dadosCep.uf ?? "").toUpperCase();
         }
+      } catch {
+        // Sem resposta do ViaCEP: segue para a cotação normal.
       }
 
       if (normalizar(cidadeDetectada) === "dourados" && estadoDetectado === "MS") {
@@ -559,7 +550,7 @@ function DetalheProduto({
       const resposta = await fetch("/api/calcular-frete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ produtoId: produto.id, quantidade, cepDestino: limpo }),
+        body: JSON.stringify({ itens: [{ produtoId: produto.id, quantidade }], cepDestino: limpo }),
       });
       const dados = await resposta.json();
 
@@ -600,55 +591,6 @@ function DetalheProduto({
     return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
   }
 
-  function linkPedidoCompleto() {
-    const linhas = [
-      "Olá! Gostaria de fazer um pedido:",
-      "",
-      `*Produto:* ${produto.nome}`,
-    ];
-
-    if (quantidade > 1) linhas.push(`*Quantidade:* ${quantidade}`);
-    if (!produto.sobConsulta) linhas.push(`*Valor:* ${formatarBRL(total)}`);
-
-    if (escolhida) {
-      linhas.push(
-        `*Entrega:* ${escolhida.transportadora} ${escolhida.servico} — ${formatarBRL(escolhida.preco)}` +
-          (escolhida.prazoDias != null ? ` (${escolhida.prazoDias} dia(s))` : ""),
-      );
-      if (!produto.sobConsulta) {
-        linhas.push(`*Total com frete:* ${formatarBRL(total + escolhida.preco)}`);
-      }
-    } else if (freteLocal) {
-      linhas.push("*Entrega:* local (Dourados/MS) — combinar valor por aqui");
-    }
-
-    linhas.push(
-      "",
-      "*Endereço de entrega:*",
-      `${rua}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
-      `${bairro} — ${cidade}/${estado}`,
-      `CEP: ${mascararCEP(cep)}`,
-      "",
-      "*Dados do cliente:*",
-      `Nome: ${nomeCliente}`,
-      `Telefone: ${telefone}`,
-    );
-
-    if (observacoes.trim()) {
-      linhas.push("", `*Observações:* ${observacoes.trim()}`);
-    }
-
-    return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
-  }
-
-  function finalizarPedido() {
-    if (!formularioValido) {
-      setTentouEnviar(true);
-      return;
-    }
-    window.open(linkPedidoCompleto(), "_blank", "noopener,noreferrer");
-  }
-
   return (
     <div className="product-detail">
       <div className="modal-img-wrap">
@@ -658,6 +600,8 @@ function DetalheProduto({
             alt={imagem.alt}
             fill
             sizes="(min-width: 1180px) 560px, 92vw"
+            placeholder="blur"
+            blurDataURL={PLACEHOLDER_BLUR}
           />
         ) : (
           <div className="img-placeholder">🌸</div>
@@ -723,134 +667,6 @@ function DetalheProduto({
           </div>
         )}
 
-        {modo === "comprar" && !produto.sobConsulta && (
-          <>
-            <fieldset className="form-fieldset">
-              <legend>Seus dados</legend>
-              <div className="form-group">
-                <label htmlFor="nomeCliente">Nome completo</label>
-                <input
-                  id="nomeCliente"
-                  placeholder="Seu nome"
-                  value={nomeCliente}
-                  onChange={(evento) => setNomeCliente(evento.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label htmlFor="telefoneCliente">Telefone (WhatsApp)</label>
-                <input
-                  id="telefoneCliente"
-                  type="tel"
-                  placeholder="(00) 00000-0000"
-                  value={telefone}
-                  onChange={(evento) => setTelefone(mascararTelefone(evento.target.value))}
-                />
-              </div>
-            </fieldset>
-
-            <fieldset className="form-fieldset">
-              <legend>Endereço de entrega</legend>
-              <div className="form-row">
-                <div className="form-group form-group--small">
-                  <label htmlFor="cepEntrega">CEP</label>
-                  <input
-                    id="cepEntrega"
-                    placeholder="00000-000"
-                    value={cep}
-                    onChange={(evento) => alterarCep(evento.target.value)}
-                    aria-label="CEP para entrega"
-                  />
-                </div>
-                <div className="form-group form-group--small">
-                  <label htmlFor="numeroEntrega">Número</label>
-                  <input
-                    id="numeroEntrega"
-                    placeholder="Nº"
-                    value={numero}
-                    onChange={(evento) => setNumero(evento.target.value)}
-                  />
-                </div>
-              </div>
-
-              {statusCep !== "idle" && (
-                <p
-                  className={`campo-status ${
-                    statusCep === "buscando"
-                      ? "campo-status--loading"
-                      : statusCep === "sucesso"
-                        ? "campo-status--sucesso"
-                        : "campo-status--erro"
-                  }`}
-                >
-                  {statusCep === "buscando" && (
-                    <>
-                      <span className="campo-status-spinner" aria-hidden="true" />
-                      Buscando endereço…
-                    </>
-                  )}
-                  {statusCep === "sucesso" && "Endereço encontrado — confira os dados abaixo."}
-                  {statusCep === "erro" && "CEP não encontrado. Preencha o endereço manualmente."}
-                </p>
-              )}
-
-              <div className="form-group">
-                <label htmlFor="ruaEntrega">Rua</label>
-                <input
-                  id="ruaEntrega"
-                  placeholder="Nome da rua"
-                  value={rua}
-                  onChange={(evento) => setRua(evento.target.value)}
-                />
-              </div>
-
-              <div className="form-row">
-                <div className="form-group form-group--grow">
-                  <label htmlFor="bairroEntrega">Bairro</label>
-                  <input
-                    id="bairroEntrega"
-                    placeholder="Bairro"
-                    value={bairro}
-                    onChange={(evento) => setBairro(evento.target.value)}
-                  />
-                </div>
-                <div className="form-group form-group--grow">
-                  <label htmlFor="cidadeEntrega">Cidade</label>
-                  <input
-                    id="cidadeEntrega"
-                    placeholder="Cidade"
-                    value={cidade}
-                    onChange={(evento) => setCidade(evento.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group form-group--small">
-                  <label htmlFor="estadoEntrega">UF</label>
-                  <input
-                    id="estadoEntrega"
-                    placeholder="UF"
-                    maxLength={2}
-                    value={estado}
-                    onChange={(evento) => setEstado(evento.target.value.toUpperCase())}
-                  />
-                </div>
-                <div className="form-group form-group--grow">
-                  <label htmlFor="complementoEntrega">
-                    Complemento <span className="campo-opcional">(opcional)</span>
-                  </label>
-                  <input
-                    id="complementoEntrega"
-                    placeholder="Apto, bloco, referência…"
-                    value={complemento}
-                    onChange={(evento) => setComplemento(evento.target.value)}
-                  />
-                </div>
-              </div>
-            </fieldset>
-          </>
-        )}
-
         {produto.freteHabilitado && !produto.sobConsulta && (
           <section className="shipping-box">
             <h3 className="shipping-title">
@@ -858,47 +674,31 @@ function DetalheProduto({
               Calcular entrega
             </h3>
 
-            {modo === "ver" ? (
-              <div className="shipping-input-row">
-                <input
-                  className="shipping-input"
-                  placeholder="00000-000"
-                  value={cep}
-                  onChange={(evento) => {
-                    setCep(mascararCEP(evento.target.value));
-                    setOpcoes(null);
-                    setEscolhida(null);
-                    setFreteLocal(false);
-                  }}
-                  onKeyDown={(evento) => {
-                    if (evento.key === "Enter") calcularFrete();
-                  }}
-                  aria-label="CEP para entrega"
-                />
-                <button
-                  type="button"
-                  className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
-                  onClick={calcularFrete}
-                  disabled={calculando}
-                >
-                  {calculando ? "Calculando" : "Calcular"}
-                </button>
-              </div>
-            ) : (
-              <div className="shipping-input-row">
-                <p className="shipping-cep-atual">
-                  {cep ? `Frete para o CEP ${mascararCEP(cep)}` : "Informe o CEP acima para calcular o frete"}
-                </p>
-                <button
-                  type="button"
-                  className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
-                  onClick={calcularFrete}
-                  disabled={calculando || cep.replace(/\D/g, "").length !== 8}
-                >
-                  {calculando ? "Calculando" : "Calcular"}
-                </button>
-              </div>
-            )}
+            <div className="shipping-input-row">
+              <input
+                className="shipping-input"
+                placeholder="00000-000"
+                value={cep}
+                onChange={(evento) => {
+                  setCep(mascararCEP(evento.target.value));
+                  setOpcoes(null);
+                  setEscolhida(null);
+                  setFreteLocal(false);
+                }}
+                onKeyDown={(evento) => {
+                  if (evento.key === "Enter") calcularFrete();
+                }}
+                aria-label="CEP para entrega"
+              />
+              <button
+                type="button"
+                className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
+                onClick={calcularFrete}
+                disabled={calculando}
+              >
+                {calculando ? "Calculando" : "Calcular"}
+              </button>
+            </div>
 
             {erroFrete && <p className="mensagem-erro">{erroFrete}</p>}
 
@@ -973,53 +773,578 @@ function DetalheProduto({
           </p>
         )}
 
-        {modo === "comprar" && !produto.sobConsulta && (
-          <fieldset className="form-fieldset">
-            <legend>
-              Observações <span className="campo-opcional">(opcional)</span>
-            </legend>
-            <div className="form-group">
-              <textarea
-                rows={3}
-                placeholder="Alguma preferência, mensagem para o cartão, horário de entrega…"
-                value={observacoes}
-                onChange={(evento) => setObservacoes(evento.target.value)}
-              />
-            </div>
-          </fieldset>
-        )}
-
-        {modo === "ver" ? (
-          produto.sobConsulta ? (
-            <a className="btn-whatsapp-modal" href={linkWhatsApp()} target="_blank" rel="noopener noreferrer">
-              <WhatsAppIcon />
-              Pedir pelo WhatsApp
-            </a>
-          ) : (
-            <button type="button" className="btn-comprar-modal" onClick={() => setModo("comprar")}>
+        {produto.sobConsulta ? (
+          <a
+            className="btn-whatsapp-modal"
+            href={linkWhatsApp()}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => toast.success("Abrindo o WhatsApp em outra aba…")}
+          >
+            <WhatsAppIcon />
+            Pedir pelo WhatsApp
+          </a>
+        ) : (
+          <>
+            <button type="button" className="btn-comprar-modal" onClick={comprarAgora}>
               <ShoppingBag weight="bold" aria-hidden="true" />
               Comprar
             </button>
-          )
-        ) : (
-          <>
-            {tentouEnviar && !formularioValido && (
-              <p className="mensagem-erro">
-                <MapPin weight="bold" aria-hidden="true" />
-                Preencha nome, telefone e endereço completo (CEP, rua, número, bairro, cidade e UF)
-                para continuar.
-              </p>
-            )}
-            <button
-              type="button"
-              className="btn-whatsapp-modal btn-enviar-pedido"
-              onClick={finalizarPedido}
-            >
-              <WhatsAppIcon />
-              Comprar pelo WhatsApp
+            <button type="button" className="btn-add-carrinho-modal" onClick={adicionarAoCarrinho}>
+              <ShoppingCart weight="bold" aria-hidden="true" />
+              Adicionar ao carrinho
             </button>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+/// Checkout do carrinho inteiro — mesma lógica de endereço/CEP/frete/
+/// WhatsApp que antes vivia em DetalheProduto, só que somando todos
+/// os itens de uma vez (a Frenet cota a caixa consolidada).
+function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; whatsapp: string }) {
+  const { itens, aberto, fecharCarrinho, definirQuantidade, remover, limpar } = useCarrinho();
+
+  const mapaProdutos = useMemo(() => {
+    const mapa = new Map<string, { produto: Produto; categoria: string }>();
+    for (const categoria of categorias) {
+      for (const produto of categoria.produtos) {
+        mapa.set(produto.id, { produto, categoria: categoria.nome });
+      }
+    }
+    return mapa;
+  }, [categorias]);
+
+  // Ignora silenciosamente itens de produtos que saíram do catálogo
+  // desde que foram adicionados (despublicados/removidos).
+  const itensResolvidos = useMemo(
+    () =>
+      itens
+        .map((item) => {
+          const encontrado = mapaProdutos.get(item.produtoId);
+          return encontrado ? { ...item, produto: encontrado.produto } : null;
+        })
+        .filter((item): item is { produtoId: string; quantidade: number; produto: Produto } => item !== null),
+    [itens, mapaProdutos],
+  );
+
+  const subtotal = itensResolvidos.reduce(
+    (soma, item) => soma + (item.produto.preco ?? 0) * item.quantidade,
+    0,
+  );
+
+  const [cep, setCep] = useState("");
+  const [calculando, setCalculando] = useState(false);
+  const [opcoes, setOpcoes] = useState<OpcaoFrete[] | null>(null);
+  const [escolhida, setEscolhida] = useState<OpcaoFrete | null>(null);
+  const [erroFrete, setErroFrete] = useState<string | null>(null);
+  const [freteLocal, setFreteLocal] = useState(false);
+
+  const [nomeCliente, setNomeCliente] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [rua, setRua] = useState("");
+  const [numero, setNumero] = useState("");
+  const [complemento, setComplemento] = useState("");
+  const [bairro, setBairro] = useState("");
+  const [cidade, setCidade] = useState("");
+  const [estado, setEstado] = useState("");
+  const [observacoes, setObservacoes] = useState("");
+  const [statusCep, setStatusCep] = useState<"idle" | "buscando" | "sucesso" | "erro">("idle");
+  const [tentouEnviar, setTentouEnviar] = useState(false);
+
+  async function buscarEndereco(cepDigitado: string) {
+    const limpo = cepDigitado.replace(/\D/g, "");
+    if (limpo.length !== 8) return;
+
+    setStatusCep("buscando");
+    try {
+      const resposta = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
+      const dados: EnderecoViaCep = await resposta.json();
+
+      if (!resposta.ok || dados.erro) {
+        setStatusCep("erro");
+        return;
+      }
+
+      setRua(dados.logradouro ?? "");
+      setBairro(dados.bairro ?? "");
+      setCidade(dados.localidade ?? "");
+      setEstado((dados.uf ?? "").toUpperCase());
+      setStatusCep("sucesso");
+    } catch {
+      setStatusCep("erro");
+    }
+  }
+
+  function alterarCep(valor: string) {
+    const mascarado = mascararCEP(valor);
+    setCep(mascarado);
+    setOpcoes(null);
+    setEscolhida(null);
+    setFreteLocal(false);
+    if (mascarado.replace(/\D/g, "").length === 8) {
+      void buscarEndereco(mascarado);
+    } else {
+      setStatusCep("idle");
+    }
+  }
+
+  const enderecoValido =
+    cep.replace(/\D/g, "").length === 8 &&
+    rua.trim().length > 0 &&
+    numero.trim().length > 0 &&
+    bairro.trim().length > 0 &&
+    cidade.trim().length > 0 &&
+    estado.trim().length === 2;
+
+  const dadosClienteValidos = nomeCliente.trim().length > 1 && telefone.replace(/\D/g, "").length >= 10;
+  const formularioValido = dadosClienteValidos && enderecoValido && itensResolvidos.length > 0;
+
+  async function calcularFrete() {
+    const limpo = cep.replace(/\D/g, "");
+    if (limpo.length !== 8) {
+      setErroFrete("Digite um CEP com 8 dígitos.");
+      return;
+    }
+    if (itensResolvidos.length === 0) return;
+
+    setCalculando(true);
+    setErroFrete(null);
+    setOpcoes(null);
+    setEscolhida(null);
+    setFreteLocal(false);
+
+    try {
+      // Endereço já foi buscado (autofill do CEP) — usa direto, sem
+      // nova chamada ao ViaCEP.
+      if (normalizar(cidade) === "dourados" && estado === "MS") {
+        setFreteLocal(true);
+        return;
+      }
+
+      const resposta = await fetch("/api/calcular-frete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itens: itensResolvidos.map((item) => ({
+            produtoId: item.produtoId,
+            quantidade: item.quantidade,
+          })),
+          cepDestino: limpo,
+        }),
+      });
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        setErroFrete(dados.erro ?? "Não foi possível calcular o frete.");
+        return;
+      }
+      if (!dados.opcoes?.length) {
+        setErroFrete(dados.aviso ?? "Nenhuma opção de entrega para este CEP.");
+        return;
+      }
+      setOpcoes(dados.opcoes);
+      setEscolhida(dados.opcoes[0]);
+    } catch {
+      setErroFrete("Erro de conexão. Tente novamente.");
+    } finally {
+      setCalculando(false);
+    }
+  }
+
+  function linkPedido() {
+    const linhas = ["Olá! Gostaria de fazer um pedido:", "", "*Itens:*"];
+
+    for (const item of itensResolvidos) {
+      const precoItem = (item.produto.preco ?? 0) * item.quantidade;
+      linhas.push(
+        `• ${item.produto.nome}${item.quantidade > 1 ? ` (x${item.quantidade})` : ""} — ${formatarBRL(precoItem)}`,
+      );
+    }
+
+    linhas.push("", `*Subtotal:* ${formatarBRL(subtotal)}`);
+
+    if (escolhida) {
+      linhas.push(
+        `*Entrega:* ${escolhida.transportadora} ${escolhida.servico} — ${formatarBRL(escolhida.preco)}` +
+          (escolhida.prazoDias != null ? ` (${escolhida.prazoDias} dia(s))` : ""),
+      );
+      linhas.push(`*Total com frete:* ${formatarBRL(subtotal + escolhida.preco)}`);
+    } else if (freteLocal) {
+      linhas.push("*Entrega:* local (Dourados/MS) — combinar valor por aqui");
+    }
+
+    linhas.push(
+      "",
+      "*Endereço de entrega:*",
+      `${rua}, ${numero}${complemento ? ` - ${complemento}` : ""}`,
+      `${bairro} — ${cidade}/${estado}`,
+      `CEP: ${mascararCEP(cep)}`,
+      "",
+      "*Dados do cliente:*",
+      `Nome: ${nomeCliente}`,
+      `Telefone: ${telefone}`,
+    );
+
+    if (observacoes.trim()) {
+      linhas.push("", `*Observações:* ${observacoes.trim()}`);
+    }
+
+    return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
+  }
+
+  function finalizarPedido() {
+    if (!formularioValido) {
+      setTentouEnviar(true);
+      return;
+    }
+    window.open(linkPedido(), "_blank", "noopener,noreferrer");
+    toast.success("Pedido pronto! Confira a aba do WhatsApp que abriu.");
+    limpar();
+    fecharCarrinho();
+  }
+
+  useEffect(() => {
+    if (!aberto) return;
+
+    function fecharComEscape(evento: KeyboardEvent) {
+      if (evento.key === "Escape") fecharCarrinho();
+    }
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", fecharComEscape);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", fecharComEscape);
+    };
+  }, [aberto, fecharCarrinho]);
+
+  if (!aberto) return null;
+
+  return (
+    <div className="modal-overlay open" role="presentation" onMouseDown={() => fecharCarrinho()}>
+      <div
+        className="modal-card checkout-card"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Seu carrinho"
+        onMouseDown={(evento) => evento.stopPropagation()}
+      >
+        <button className="modal-close" onClick={() => fecharCarrinho()} aria-label="Fechar">
+          <X size={16} weight="bold" />
+        </button>
+
+        <div className="checkout-form cart-drawer-content">
+          <h2 className="cart-drawer-title">
+            <ShoppingCart weight="bold" aria-hidden="true" />
+            Seu carrinho
+          </h2>
+
+          {itensResolvidos.length === 0 ? (
+            <div className="cart-empty">
+              <div className="cart-empty-icon">🌸</div>
+              <p>Seu carrinho está vazio</p>
+              <span>Adicione produtos pelo catálogo pra montar seu pedido.</span>
+            </div>
+          ) : (
+            <>
+              <div className="cart-item-list">
+                {itensResolvidos.map((item) => {
+                  const imagem = item.produto.imagens[0];
+                  return (
+                    <div className="cart-item" key={item.produtoId}>
+                      <div className="cart-item-img">
+                        {imagem ? (
+                          <Image src={imagem.url} alt={imagem.alt} fill sizes="64px" />
+                        ) : (
+                          <div className="img-placeholder">🌸</div>
+                        )}
+                      </div>
+                      <div className="cart-item-info">
+                        <p className="cart-item-name">{item.produto.nome}</p>
+                        <p className="cart-item-price">{formatarBRL(item.produto.preco)}</p>
+                        <div className="cart-item-row">
+                          <div className="quantity-control">
+                            <button
+                              type="button"
+                              onClick={() => definirQuantidade(item.produtoId, item.quantidade - 1)}
+                              aria-label="Diminuir quantidade"
+                            >
+                              <Minus size={12} weight="bold" />
+                            </button>
+                            <strong>{item.quantidade}</strong>
+                            <button
+                              type="button"
+                              onClick={() => definirQuantidade(item.produtoId, item.quantidade + 1)}
+                              aria-label="Aumentar quantidade"
+                            >
+                              <Plus size={12} weight="bold" />
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className="cart-item-remove"
+                            onClick={() => remover(item.produtoId)}
+                            aria-label={`Remover ${item.produto.nome} do carrinho`}
+                          >
+                            <Trash size={16} weight="bold" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="cart-subtotal">
+                <span>Subtotal</span>
+                <span>{formatarBRL(subtotal)}</span>
+              </div>
+
+              <fieldset className="form-fieldset">
+                <legend>Seus dados</legend>
+                <div className="form-group">
+                  <label htmlFor="carrinhoNome">Nome completo</label>
+                  <input
+                    id="carrinhoNome"
+                    placeholder="Seu nome"
+                    value={nomeCliente}
+                    onChange={(evento) => setNomeCliente(evento.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="carrinhoTelefone">Telefone (WhatsApp)</label>
+                  <input
+                    id="carrinhoTelefone"
+                    type="tel"
+                    placeholder="(00) 00000-0000"
+                    value={telefone}
+                    onChange={(evento) => setTelefone(mascararTelefone(evento.target.value))}
+                  />
+                </div>
+              </fieldset>
+
+              <fieldset className="form-fieldset">
+                <legend>Endereço de entrega</legend>
+                <div className="form-row">
+                  <div className="form-group form-group--small">
+                    <label htmlFor="carrinhoCep">CEP</label>
+                    <input
+                      id="carrinhoCep"
+                      placeholder="00000-000"
+                      value={cep}
+                      onChange={(evento) => alterarCep(evento.target.value)}
+                      aria-label="CEP para entrega"
+                    />
+                  </div>
+                  <div className="form-group form-group--small">
+                    <label htmlFor="carrinhoNumero">Número</label>
+                    <input
+                      id="carrinhoNumero"
+                      placeholder="Nº"
+                      value={numero}
+                      onChange={(evento) => setNumero(evento.target.value)}
+                    />
+                  </div>
+                </div>
+
+                {statusCep !== "idle" && (
+                  <p
+                    className={`campo-status ${
+                      statusCep === "buscando"
+                        ? "campo-status--loading"
+                        : statusCep === "sucesso"
+                          ? "campo-status--sucesso"
+                          : "campo-status--erro"
+                    }`}
+                  >
+                    {statusCep === "buscando" && (
+                      <>
+                        <span className="campo-status-spinner" aria-hidden="true" />
+                        Buscando endereço…
+                      </>
+                    )}
+                    {statusCep === "sucesso" && "Endereço encontrado — confira os dados abaixo."}
+                    {statusCep === "erro" && "CEP não encontrado. Preencha o endereço manualmente."}
+                  </p>
+                )}
+
+                <div className="form-group">
+                  <label htmlFor="carrinhoRua">Rua</label>
+                  <input
+                    id="carrinhoRua"
+                    placeholder="Nome da rua"
+                    value={rua}
+                    onChange={(evento) => setRua(evento.target.value)}
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group form-group--grow">
+                    <label htmlFor="carrinhoBairro">Bairro</label>
+                    <input
+                      id="carrinhoBairro"
+                      placeholder="Bairro"
+                      value={bairro}
+                      onChange={(evento) => setBairro(evento.target.value)}
+                    />
+                  </div>
+                  <div className="form-group form-group--grow">
+                    <label htmlFor="carrinhoCidade">Cidade</label>
+                    <input
+                      id="carrinhoCidade"
+                      placeholder="Cidade"
+                      value={cidade}
+                      onChange={(evento) => setCidade(evento.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group form-group--small">
+                    <label htmlFor="carrinhoEstado">UF</label>
+                    <input
+                      id="carrinhoEstado"
+                      placeholder="UF"
+                      maxLength={2}
+                      value={estado}
+                      onChange={(evento) => setEstado(evento.target.value.toUpperCase())}
+                    />
+                  </div>
+                  <div className="form-group form-group--grow">
+                    <label htmlFor="carrinhoComplemento">
+                      Complemento <span className="campo-opcional">(opcional)</span>
+                    </label>
+                    <input
+                      id="carrinhoComplemento"
+                      placeholder="Apto, bloco, referência…"
+                      value={complemento}
+                      onChange={(evento) => setComplemento(evento.target.value)}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+
+              <section className="shipping-box">
+                <h3 className="shipping-title">
+                  <Truck weight="bold" />
+                  Calcular entrega
+                </h3>
+                <div className="shipping-input-row">
+                  <p className="shipping-cep-atual">
+                    {cep
+                      ? `Frete para o CEP ${mascararCEP(cep)}`
+                      : "Informe o CEP acima para calcular o frete"}
+                  </p>
+                  <button
+                    type="button"
+                    className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
+                    onClick={calcularFrete}
+                    disabled={calculando || cep.replace(/\D/g, "").length !== 8}
+                  >
+                    {calculando ? "Calculando" : "Calcular"}
+                  </button>
+                </div>
+
+                {erroFrete && <p className="mensagem-erro">{erroFrete}</p>}
+
+                {freteLocal && (
+                  <div className="frete-local-aviso">
+                    <Car weight="bold" aria-hidden="true" />
+                    <div>
+                      <strong>Você está em Dourados/MS!</strong>
+                      <p>
+                        Aqui a entrega é feita por nós mesmos, de carro ou moto — sem Correios ou
+                        transportadora. O valor da entrega local é combinado direto pelo WhatsApp.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {opcoes && (
+                  <div className="frete-opcoes">
+                    {opcoes.map((opcao) => {
+                      const selecionada =
+                        escolhida?.codigoServico === opcao.codigoServico &&
+                        escolhida?.servico === opcao.servico;
+
+                      return (
+                        <button
+                          type="button"
+                          key={`${opcao.codigoServico}-${opcao.servico}`}
+                          className={`frete-opcao ${selecionada ? "selecionada" : ""}`}
+                          onClick={() => setEscolhida(opcao)}
+                        >
+                          <span className="frete-opcao-principal">
+                            <span className="frete-opcao-nome">
+                              {opcao.transportadora} {opcao.servico}
+                            </span>
+                            <strong className="frete-opcao-preco">{formatarBRL(opcao.preco)}</strong>
+                          </span>
+                          {opcao.prazoDias != null && (
+                            <span className="frete-opcao-prazo">
+                              até {opcao.prazoDias} dia(s) útil(eis)
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {escolhida && (
+                  <div className="resumo-pedido">
+                    <div className="resumo-linha">
+                      <span className="resumo-rotulo">Produtos</span>
+                      <span className="resumo-valor">{formatarBRL(subtotal)}</span>
+                    </div>
+                    <div className="resumo-linha">
+                      <span className="resumo-rotulo">Entrega</span>
+                      <span className="resumo-valor">{formatarBRL(escolhida.preco)}</span>
+                    </div>
+                    <div className="resumo-linha resumo-total">
+                      <span>Total</span>
+                      <span>{formatarBRL(subtotal + escolhida.preco)}</span>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              <fieldset className="form-fieldset">
+                <legend>
+                  Observações <span className="campo-opcional">(opcional)</span>
+                </legend>
+                <div className="form-group">
+                  <textarea
+                    rows={3}
+                    placeholder="Alguma preferência, mensagem para o cartão, horário de entrega…"
+                    value={observacoes}
+                    onChange={(evento) => setObservacoes(evento.target.value)}
+                  />
+                </div>
+              </fieldset>
+
+              {tentouEnviar && !formularioValido && (
+                <p className="mensagem-erro">
+                  <MapPin weight="bold" aria-hidden="true" />
+                  Preencha nome, telefone e endereço completo (CEP, rua, número, bairro, cidade e UF)
+                  para continuar.
+                </p>
+              )}
+
+              <button
+                type="button"
+                className="btn-whatsapp-modal btn-enviar-pedido"
+                onClick={finalizarPedido}
+              >
+                <WhatsAppIcon />
+                Comprar pelo WhatsApp
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { BotaoVoltarTopo } from "@/components/site/BotaoVoltarTopo";
+import { CarrinhoProvider } from "@/components/site/CarrinhoContext";
 
 export const revalidate = 300;
 
@@ -30,8 +32,22 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   const whatsappUrl = `https://wa.me/${whatsapp}?text=${WHATSAPP_MESSAGE}`;
 
   return (
+    <CarrinhoProvider>
     <div className="public-site">
       <SiteHeader />
+
+      <div className="hero-banner">
+        <div className="hero-banner-glow" />
+        <div className="hero-banner-inner">
+          <p className="brand-tagline">Flores eternas feitas à mão</p>
+          <p className="brand-sub">Buquês · Chaveiros · Presentes Personalizados</p>
+          <p className="brand-delivery">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/imagens/express-delivery.png" alt="" className="delivery-icon" />
+            Enviamos para todo o Brasil
+          </p>
+        </div>
+      </div>
 
       {children}
 
@@ -41,19 +57,19 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
             <div className="footer-col footer-col-brand">
               <div className="footer-logo-wrap">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/imagens/logo-refugio.svg" alt="" className="footer-flower" />
+                <img src="/imagens/logo-refugio.svg" alt="" loading="lazy" className="footer-flower" />
                 <p className="footer-brand">Refúgio das Flores</p>
               </div>
               <p className="footer-tagline-mini">Flores eternas feitas à mão</p>
 
               <p className="footer-location">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/imagens/location.png" alt="" className="footer-info-icon" />
+                <img src="/imagens/location.png" alt="" loading="lazy" className="footer-info-icon" />
                 Dourados - MS
               </p>
               <p className="footer-shipping">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/imagens/express-delivery.png" alt="" className="footer-info-icon" />
+                <img src="/imagens/express-delivery.png" alt="" loading="lazy" className="footer-info-icon" />
                 Enviamos para todo o Brasil
               </p>
             </div>
@@ -116,6 +132,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           </div>
         </div>
       </footer>
+
+      <BotaoVoltarTopo />
     </div>
+    </CarrinhoProvider>
   );
 }

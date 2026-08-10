@@ -70,6 +70,53 @@ export type ProdutoForm = {
 };
 
 const CEP_TESTE_PADRAO = "01001-000";
+const QUALIDADE_WEBP = 0.85;
+
+/// Converte a foto pra WebP no navegador antes do envio. O upload
+/// vai direto do navegador pro Vercel Blob (ver enviarFoto), então
+/// não existe uma rota de servidor no meio do caminho pra fazer
+/// esse trabalho — tem que ser aqui, via canvas.
+function converterParaWebp(arquivo: File, qualidade = QUALIDADE_WEBP): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(arquivo);
+    const imagem = new window.Image();
+
+    imagem.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = imagem.naturalWidth;
+      canvas.height = imagem.naturalHeight;
+      const contexto = canvas.getContext("2d");
+
+      if (!contexto) {
+        URL.revokeObjectURL(url);
+        reject(new Error("Canvas indisponível neste navegador."));
+        return;
+      }
+
+      contexto.drawImage(imagem, 0, 0);
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(url);
+          if (!blob) {
+            reject(new Error("Não foi possível converter a imagem."));
+            return;
+          }
+          const nome = arquivo.name.replace(/\.[^.]+$/, "") + ".webp";
+          resolve(new File([blob], nome, { type: "image/webp" }));
+        },
+        "image/webp",
+        qualidade,
+      );
+    };
+
+    imagem.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Não foi possível ler a imagem."));
+    };
+
+    imagem.src = url;
+  });
+}
 
 export function FormularioProduto({
   categorias,
@@ -161,12 +208,23 @@ export function FormularioProduto({
 
     setEnviandoFoto(true);
     try {
-      const extensao = arquivo.type.split("/")[1].replace("jpeg", "jpg");
+      let arquivoParaEnviar = arquivo;
+      if (arquivo.type !== "image/webp") {
+        try {
+          arquivoParaEnviar = await converterParaWebp(arquivo);
+        } catch (erroConversao) {
+          // Não trava o cadastro por causa disso — envia a foto
+          // original em vez de perder o upload inteiro.
+          console.warn("[upload] conversão pra WebP falhou, enviando original:", erroConversao);
+        }
+      }
+
+      const extensao = arquivoParaEnviar.type.split("/")[1].replace("jpeg", "jpg");
       const pathname = `produtos/${crypto.randomUUID()}.${extensao}`;
 
       // Upload direto do navegador para o Vercel Blob. A rota
       // /api/admin/upload apenas autentica e gera o token temporário.
-      const blob = await upload(pathname, arquivo, {
+      const blob = await upload(pathname, arquivoParaEnviar, {
         access: "public",
         handleUploadUrl: "/api/admin/upload",
       });
@@ -364,6 +422,7 @@ export function FormularioProduto({
                   <img
                     src={img.url}
                     alt={img.alt ?? f.nome}
+                    loading="lazy"
                     className="h-20 w-20 rounded-md border object-cover"
                   />
                   {i === 0 && (

@@ -122,10 +122,19 @@ const cepSchema = z
   .transform((v) => v.replace(/\D/g, ""))
   .refine((v) => v.length === 8, "CEP inválido.");
 
-/// Rota PÚBLICA: aceita apenas o id. Dimensões vêm do banco.
+/// Rota PÚBLICA: aceita apenas ids. Dimensões vêm do banco. Array
+/// serve tanto pra estimativa de um produto só (?ver) quanto pra
+/// cotação consolidada do carrinho inteiro.
 export const calcularFretePublicoSchema = z.object({
-  produtoId: z.string().uuid(),
-  quantidade: z.coerce.number().int().min(1).max(10),
+  itens: z
+    .array(
+      z.object({
+        produtoId: z.string().uuid(),
+        quantidade: z.coerce.number().int().min(1).max(10),
+      }),
+    )
+    .min(1)
+    .max(20),
   cepDestino: cepSchema,
 });
 

@@ -51,6 +51,7 @@ export default async function ProdutosPage() {
                 <img
                   src={p.imagens[0].url}
                   alt=""
+                  loading="lazy"
                   className="h-16 w-16 shrink-0 rounded-md border object-cover"
                 />
               ) : (
@@ -118,6 +119,7 @@ export default async function ProdutosPage() {
                     <img
                       src={p.imagens[0].url}
                       alt=""
+                      loading="lazy"
                       className="h-10 w-10 rounded border object-cover"
                     />
                   ) : (

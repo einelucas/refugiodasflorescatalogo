@@ -18,6 +18,7 @@
   --green-wa:     #25D366;
   --green-wa-dk:  #128C7E;
 
+  --header-bar-height: 61px;
   --radius-card:  22px;
   --radius-btn:   50px;
   --shadow-card:  0 2px 16px rgba(90,30,114,0.08), 0 6px 28px rgba(90,30,114,0.07);
@@ -55,104 +56,151 @@
 .public-site::-webkit-scrollbar-thumb { background: var(--purple-mid); border-radius: 3px; }
 
 /* =========================================================
-   HEADER
+   HEADER — barra fixa e compacta (logo + nome), sempre visível.
+   Deixa de ser a hero de foto que encolhia no scroll: agora fica
+   parada no topo, com espaço reservado pro ícone do carrinho à
+   direita quando ele existir.
    ========================================================= */
-.public-site .site-header {
+.public-site .site-header-bar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(253, 240, 247, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(140, 63, 175, 0.1);
+}
+
+.public-site .site-header-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100%, 1480px);
+  margin-inline: auto;
+  padding: 10px 20px;
+}
+
+.public-site .site-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.public-site .site-header-logo-ring {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  box-shadow: 0 2px 10px rgba(90, 30, 114, 0.3);
+}
+
+.public-site .site-header-logo-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.public-site .site-header-wordmark {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--purple-deep);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.public-site .site-header-cart {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background: rgba(140, 63, 175, 0.08);
+  color: var(--purple-deep);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s var(--ease-smooth);
+}
+
+.public-site .site-header-cart:hover {
+  background: rgba(140, 63, 175, 0.16);
+  transform: translateY(-1px);
+}
+
+.public-site .site-header-cart-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(253, 240, 247, 0.92);
+}
+
+/* =========================================================
+   HERO BANNER — a foto e a apresentação da marca, agora como
+   uma faixa menor que rola com a página (não é mais sticky nem
+   encolhe via JS: só uma seção normal, mais simples e previsível).
+   ========================================================= */
+.public-site .hero-banner {
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   background-image: url("/imagens/20260506_093429.jpg");
   background-repeat: no-repeat;
-  background-position: center top;
-  background-size: contain;
+  background-position: center 30%;
+  background-size: cover;
   background-color: #2b2428;
-  padding: 60px 24px 70px;
+  min-height: clamp(150px, 20vw, 220px);
+  padding: 24px 20px;
   text-align: center;
-  border-radius: 0 0 25px 25px;
 }
 
-/* Encolhimento fica 1:1 com o scroll (max-height e opacity
-   escritos via JS a cada frame em SiteHeader.tsx) — de propósito
-   sem transition aqui, senão o CSS fica "correndo atrás" do valor
-   real e o movimento parece puxado em vez de acompanhar o dedo. */
-
-
-/* Filtro escuro sobre a imagem */
-.public-site .site-header::after {
+.public-site .hero-banner::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 1;
-
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.45) 0%,
-    rgba(0, 0, 0, 0.58) 60%,
-    rgba(0, 0, 0, 0.68) 100%
-  );
-
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.55) 100%);
   pointer-events: none;
 }
 
-.public-site .site-header h1, .public-site .site-header p {
-  color: white;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-}
-
-/* Mantém textos, logo e botão acima do filtro */
-.public-site .site-header > * {
-  position: relative;
-  z-index: 2;
-}
-/* Large radial glow behind content */
-.public-site .header-glow {
+.public-site .hero-banner-glow {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse 70% 50% at 50% 20%, rgba(255,255,255,0.08) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(217,179,217,0.12) 0%, transparent 60%);
+  background: radial-gradient(ellipse 70% 60% at 50% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
   pointer-events: none;
 }
 
-/* Noise texture overlay */
-
-
-.public-site .header-inner {
+.public-site .hero-banner-inner {
   position: relative;
   z-index: 2;
   opacity: 0;
-  animation: fadeUp 0.8s var(--ease-smooth) 0.1s forwards;
+  animation: fadeUp 0.7s var(--ease-smooth) 0.05s forwards;
 }
 
-/* Logo */
-.public-site .logo-wrap { display: flex; justify-content: center; margin-bottom: 18px; }
-
-.public-site .logo-ring {
-  width: 104px;
-  height: 104px;
-  border-radius: 50%;
-
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--purple-deep) 70%, transparent) 0%,
-    color-mix(in srgb, var(--purple-mid) 70%, transparent) 100%
-  );
-
-  box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.2),
-    var(--shadow-glow);
-}
-
-/* Brand text — um único momento de entrada para o bloco inteiro
-   (ver .header-inner) em vez de cada linha animar em separado. */
-.public-site .brand-name {
-  font-family: var(--font-display);
-  font-size: clamp(2.2rem, 8vw, 3.4rem);
-  font-weight: 500;
-  color: var(--white);
-  letter-spacing: 0.02em;
-  text-shadow: 0 2px 20px rgba(0,0,0,0.2);
-  margin-bottom: 12px;
+.public-site .hero-banner p {
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
 }
 
 .public-site .brand-tagline {
@@ -203,7 +251,7 @@
 /* ── Search + Filter bar ────────────────────────────────── */
 .public-site .search-filter-bar {
   position: sticky;
-  top: 0;
+  top: var(--header-bar-height);
   z-index: 100;
   background: rgba(253,240,247,0.82);
   backdrop-filter: blur(20px);
@@ -608,6 +656,33 @@
   transform: translateY(-1px);
 }
 
+/* "Adicionar ao carrinho" no card: ação rápida, sem sair da
+   grade — tom mais discreto que "Comprar", mas preenchido pra
+   não se confundir com "Ver Produto". */
+.public-site .btn-add-carrinho {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 10px;
+  border-radius: 14px;
+  background: rgba(90, 30, 114, 0.08);
+  border: none;
+  color: var(--purple-deep);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.3s, transform 0.3s var(--ease-smooth), background 0.3s;
+}
+
+.public-site .btn-add-carrinho:hover {
+  background: rgba(90, 30, 114, 0.14);
+  transform: translateY(-1px);
+}
+
+.public-site .btn-add-carrinho svg { width: 14px; height: 14px; flex-shrink: 0; }
+
 /* ── Placeholder image (no real image) ─────────────────── */
 .public-site .img-placeholder {
   width: 100%;
@@ -694,43 +769,38 @@
 
 @media (min-width: 540px) { .public-site .modal-card::before { display: none; } }
 
-.public-site .modal-close {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: rgba(90,30,114,0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  transition: background 0.2s;
-}
-
-.public-site .modal-close:hover { background: rgba(90,30,114,0.16); }
-.public-site .modal-close svg {
-  width: 16px; height: 16px;
-  color: var(--purple-deep);
-}
-
+/* Ficam por cima da foto do produto (topo do modal no mobile) —
+   precisam de contraste próprio, independente do que está atrás,
+   em vez de um tom quase transparente que só funciona sobre fundo
+   branco. Fundo emvidraçado + sombra resolve isso em qualquer foto. */
+.public-site .modal-close,
 .public-site .modal-share {
   position: absolute;
   top: 14px;
-  right: 58px;
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: rgba(90,30,114,0.08);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(43, 20, 56, 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s var(--ease-smooth);
 }
 
-.public-site .modal-share:hover { background: rgba(90,30,114,0.16); }
+.public-site .modal-close { right: 14px; }
+.public-site .modal-share { right: 58px; }
+
+.public-site .modal-close:hover,
+.public-site .modal-share:hover {
+  background: #fff;
+  transform: translateY(-1px);
+}
+
+.public-site .modal-close svg,
 .public-site .modal-share svg {
   width: 16px; height: 16px;
   color: var(--purple-deep);
@@ -824,8 +894,8 @@
   flex-shrink: 0;
 }
 
-/* Ação principal no modo "ver": único CTA do modal, leva direto
-   ao formulário de compra sem fechar o modal. */
+/* "Comprar" no modal "Ver Produto": ação principal, adiciona ao
+   carrinho e já abre o carrinho pra seguir pro checkout. */
 .public-site .btn-comprar-modal {
   display: flex;
   align-items: center;
@@ -848,6 +918,32 @@
 }
 
 .public-site .btn-comprar-modal svg { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* "Adicionar ao carrinho" no modal: ação secundária, some
+   silenciosamente pro carrinho sem levar pro checkout. */
+.public-site .btn-add-carrinho-modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: transparent;
+  border: 1.5px solid rgba(90, 30, 114, 0.28);
+  color: var(--purple-deep);
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: transform 0.3s var(--ease-smooth), background 0.3s, border-color 0.3s;
+}
+
+.public-site .btn-add-carrinho-modal:hover {
+  background: rgba(90, 30, 114, 0.06);
+  border-color: var(--purple-mid);
+  transform: translateY(-1px);
+}
+
+.public-site .btn-add-carrinho-modal svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 .public-site .campo-opcional {
   font-weight: 400;
@@ -1070,6 +1166,30 @@
   font-size: 0.75rem;
   color: rgba(255,255,255,0.35);
   letter-spacing: 0.04em;
+}
+
+/* ── Voltar ao topo ─────────────────────────────────────── */
+.public-site .botao-voltar-topo {
+  position: fixed;
+  right: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 90;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(90, 30, 114, 0.32);
+  transition: transform 0.25s var(--ease-smooth), box-shadow 0.25s;
+  animation: fadeUp 0.3s var(--ease-smooth);
+}
+
+.public-site .botao-voltar-topo:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(90, 30, 114, 0.42);
 }
 
 /* =========================================================
@@ -1511,6 +1631,122 @@
   transform: none;
 }
 
+/* =========================================================
+   ✦ CARRINHO — lista de itens dentro do modal de checkout
+   ========================================================= */
+
+.public-site .cart-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--purple-deep);
+  margin: 0;
+}
+
+.public-site .cart-drawer-title svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+.public-site .cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 48px 20px;
+}
+
+.public-site .cart-empty-icon { font-size: 2.5rem; }
+.public-site .cart-empty p { font-size: 1.05rem; font-weight: 500; color: var(--text-body); }
+.public-site .cart-empty span { font-size: 0.85rem; color: var(--text-muted); }
+
+.public-site .cart-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.public-site .cart-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(90, 30, 114, 0.1);
+}
+
+.public-site .cart-item:last-child { border-bottom: none; }
+
+.public-site .cart-item-img {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--rose-light), var(--lavender));
+}
+
+.public-site .cart-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.public-site .cart-item-name {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-site .cart-item-price {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--purple-deep);
+}
+
+.public-site .cart-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 10px;
+}
+
+.public-site .cart-item-remove {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  color: #b4547a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+}
+
+.public-site .cart-item-remove:hover {
+  background: rgba(180, 84, 122, 0.1);
+  color: #8f2d4f;
+}
+
+.public-site .cart-subtotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(90, 30, 114, 0.12);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--purple-deep);
+}
+
 /* ── Responsividade ──────────────────────────────────────── */
 
 @media (max-width: 480px) {
@@ -1525,11 +1761,6 @@
   background: rgba(253, 240, 247, 0.82);
   color: var(--text-dark);
   font-family: var(--font-sans), "Poppins", "Helvetica Neue", sans-serif;
-}
-
-.public-site .logo-svg {
-  width: 100%;
-  height: 100%;
 }
 
 .public-site .catalog-container {
@@ -1797,19 +2028,15 @@
   min-width: 0;
 }
 
-/* Mantém a fotografia do header preenchendo e centralizada. */
-.public-site .site-header {
-  display: flex;
-  min-height: clamp(380px, 34vw, 480px);
-  align-items: center;
-  justify-content: center;
-  padding: clamp(32px, 4.5vw, 56px) clamp(16px, 4vw, 40px);
+/* Mantém a fotografia do banner preenchendo e centralizada. */
+.public-site .hero-banner {
+  padding: clamp(24px, 3.5vw, 40px) clamp(16px, 4vw, 40px);
   background-position: center center;
   background-size: cover;
 }
 
-.public-site .header-inner {
-  width: min(100%, 760px);
+.public-site .hero-banner-inner {
+  width: min(100%, 640px);
   margin-inline: auto;
 }
 
@@ -1840,29 +2067,19 @@
 
 /* Celulares pequenos: até 479 px. */
 @media (max-width: 479px) {
-  .public-site .site-header {
-    min-height: 400px;
-    padding: 28px 16px 36px;
+  .public-site .hero-banner {
+    min-height: 130px;
+    padding: 20px 16px;
     /* Ajusta o ponto focal sem perder a centralização visual da foto. */
     background-position: 58% center;
-    border-radius: 0 0 20px 20px;
   }
 
-  .public-site .header-inner {
-    max-width: 360px;
+  .public-site .hero-banner-inner {
+    max-width: 320px;
   }
 
-  .public-site .logo-wrap {
-    margin-bottom: 14px;
-  }
-
-  .public-site .logo-ring {
-    width: 92px;
-    height: 92px;
-  }
-
-  .public-site .brand-name {
-    font-size: clamp(2rem, 11vw, 2.65rem);
+  .public-site .site-header-wordmark {
+    font-size: 1rem;
   }
 
   .public-site .brand-tagline {
@@ -1936,38 +2153,6 @@
     font-size: 0.96rem;
   }
 
-  .public-site .modal-overlay {
-    padding: 0;
-  }
-
-  .public-site .modal-card,
-  .public-site .checkout-card {
-    max-width: none;
-    max-height: 96dvh;
-  }
-
-  .public-site .modal-img-wrap {
-    aspect-ratio: 1 / 1;
-  }
-
-  .public-site .modal-info,
-  .public-site .checkout-form {
-    padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
-  }
-
-  .public-site .modal-name {
-    padding-right: 34px;
-    font-size: 1.35rem;
-  }
-
-  .public-site .quantity-row {
-    align-items: flex-start;
-  }
-
-  .public-site .shipping-box {
-    padding: 14px;
-  }
-
   .public-site .site-footer {
     padding: 48px 16px calc(32px + env(safe-area-inset-bottom));
     border-radius: 20px 20px 0 0;
@@ -1983,6 +2168,45 @@
   }
 }
 
+/* Modal de produto/carrinho no mobile — vale pra todo celular
+   (não só telas bem pequenas). A foto usa aspect-ratio + um teto
+   em vh, então ela não domina a tela mesmo em telas mais largas
+   ou baixas, e o botão de fechar sobra bem mais visível. */
+@media (max-width: 767px) {
+  .public-site .modal-overlay {
+    padding: 0;
+  }
+
+  .public-site .modal-card,
+  .public-site .checkout-card {
+    max-width: none;
+    max-height: 88dvh;
+  }
+
+  .public-site .modal-img-wrap {
+    aspect-ratio: 3 / 2;
+    max-height: 38vh;
+  }
+
+  .public-site .modal-info,
+  .public-site .checkout-form {
+    padding: 16px 16px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .public-site .modal-name {
+    padding-right: 34px;
+    font-size: 1.35rem;
+  }
+
+  .public-site .quantity-row {
+    align-items: flex-start;
+  }
+
+  .public-site .shipping-box {
+    padding: 14px;
+  }
+}
+
 /* Celulares maiores e tablets pequenos. */
 @media (min-width: 480px) {
   .public-site .products-grid {
@@ -1992,8 +2216,8 @@
 }
 
 @media (min-width: 480px) and (max-width: 767px) {
-  .public-site .site-header {
-    min-height: 420px;
+  .public-site .hero-banner {
+    min-height: 160px;
     background-position: 55% center;
   }
 
@@ -2008,8 +2232,8 @@
 
 /* Tablets. */
 @media (min-width: 768px) {
-  .public-site .site-header {
-    min-height: 440px;
+  .public-site .hero-banner {
+    min-height: 170px;
     background-position: center center;
   }
 
@@ -2061,8 +2285,8 @@
 
 /* Desktop largo. */
 @media (min-width: 1180px) {
-  .public-site .site-header {
-    min-height: 460px;
+  .public-site .hero-banner {
+    min-height: 180px;
   }
 
   .public-site .products-grid {
@@ -2101,8 +2325,8 @@
 
 /* Widescreen: limita o conteúdo para não criar cards excessivamente largos. */
 @media (min-width: 1600px) {
-  .public-site .site-header {
-    min-height: 480px;
+  .public-site .hero-banner {
+    min-height: 190px;
   }
 
   .public-site .catalog-container,
@@ -2113,22 +2337,9 @@
 
 /* Telas desktop baixas, como notebooks com pouca altura útil. */
 @media (min-width: 768px) and (max-height: 720px) {
-  .public-site .site-header {
-    min-height: 380px;
-    padding-block: 28px;
-  }
-
-  .public-site .logo-ring {
-    width: 96px;
-    height: 96px;
-  }
-
-  .public-site .logo-wrap {
-    margin-bottom: 14px;
-  }
-
-  .public-site .brand-delivery {
-    margin-bottom: 0;
+  .public-site .hero-banner {
+    min-height: 140px;
+    padding-block: 20px;
   }
 }
 

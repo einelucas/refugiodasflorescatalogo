@@ -41,8 +41,7 @@ type RespostaFrenet = {
 };
 
 export async function cotarFrete(params: {
-  dimensoes: DimensoesPacote;
-  quantidade: number;
+  itens: { dimensoes: DimensoesPacote; quantidade: number }[];
   valorDeclarado: number;
   cepDestino: string;
 }): Promise<ResultadoFrete> {
@@ -62,19 +61,17 @@ export async function cotarFrete(params: {
     RecipientCEP: params.cepDestino.replace(/\D/g, ""),
     ShipmentInvoiceValue: Number(params.valorDeclarado.toFixed(2)),
     ShippingServiceCode: null,
-    ShippingItemArray: [
-      {
-        // A Frenet faz a cubagem a partir de Quantity — não
-        // multiplique as dimensões manualmente. Ela conhece as
-        // regras de empilhamento de cada transportadora melhor
-        // que qualquer aproximação nossa.
-        Height: params.dimensoes.alturaCm,
-        Length: params.dimensoes.comprimentoCm,
-        Width: params.dimensoes.larguraCm,
-        Weight: params.dimensoes.pesoKg,
-        Quantity: params.quantidade,
-      },
-    ],
+    // Um item por produto distinto do carrinho — a Frenet faz a
+    // cubagem consolidada a partir de todos eles (via Quantity em
+    // cada um), o que dá um preço real de caixa única em vez de
+    // somar N cotações de item avulso.
+    ShippingItemArray: params.itens.map((item) => ({
+      Height: item.dimensoes.alturaCm,
+      Length: item.dimensoes.comprimentoCm,
+      Width: item.dimensoes.larguraCm,
+      Weight: item.dimensoes.pesoKg,
+      Quantity: item.quantidade,
+    })),
     RecipientCountry: "BR",
   };
 
