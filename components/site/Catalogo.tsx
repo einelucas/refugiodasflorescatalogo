@@ -6,10 +6,12 @@ import {
   Car,
   CaretLeft,
   CaretRight,
+  CreditCard,
   MapPin,
   MagnifyingGlass,
   Minus,
   Plus,
+  QrCode,
   ShareNetwork,
   ShoppingBag,
   ShoppingCart,
@@ -18,7 +20,15 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { formatarBRL, mascararCEP, mascararTelefone } from "@/lib/utils";
+import {
+  calcularParcela,
+  calcularValorCredito,
+  formatarBRL,
+  formatarParcelamento,
+  mascararCEP,
+  mascararTelefone,
+  PARCELAS_MAXIMAS,
+} from "@/lib/utils";
 import { useCarrinho } from "./CarrinhoContext";
 
 /// Placeholder borrado enquanto a foto real carrega — mesmo degradê
@@ -417,9 +427,16 @@ function CardProduto({
       <div className="card-body">
         <p className="card-category">{categoria}</p>
         <h3 className="card-name">{produto.nome}</h3>
-        <p className="card-price">
-          {produto.sobConsulta ? "A consultar" : formatarBRL(produto.preco)}
-        </p>
+        <div className="card-price">
+          {produto.sobConsulta || produto.preco === null ? (
+            "A consultar"
+          ) : (
+            <>
+              <span className="card-price-pix">{formatarBRL(produto.preco)} no Pix</span>
+              <span className="card-price-parcelas">{formatarParcelamento(produto.preco)}</span>
+            </>
+          )}
+        </div>
         {produto.descricao && <p className="card-desc">{produto.descricao}</p>}
       </div>
 
@@ -647,9 +664,16 @@ function DetalheProduto({
           <p className="modal-category">{categoria}</p>
           <h2 className="modal-name">{produto.nome}</h2>
           {produto.descricao && <p className="modal-desc">{produto.descricao}</p>}
-          <p className="modal-price">
-            {produto.sobConsulta ? "A consultar" : formatarBRL(produto.preco)}
-          </p>
+          <div className="modal-price">
+            {produto.sobConsulta || produto.preco === null ? (
+              "A consultar"
+            ) : (
+              <>
+                <span className="modal-price-pix">{formatarBRL(produto.preco)} no Pix</span>
+                <span className="modal-price-parcelas">{formatarParcelamento(produto.preco)}</span>
+              </>
+            )}
+          </div>
         </div>
 
         {!produto.sobConsulta && (
@@ -842,6 +866,9 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
   const [erroFrete, setErroFrete] = useState<string | null>(null);
   const [freteLocal, setFreteLocal] = useState(false);
 
+  const [formaPagamento, setFormaPagamento] = useState<"pix" | "credito">("pix");
+  const [parcelas, setParcelas] = useState(1);
+
   const [nomeCliente, setNomeCliente] = useState("");
   const [telefone, setTelefone] = useState("");
   const [rua, setRua] = useState("");
@@ -901,6 +928,13 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
 
   const dadosClienteValidos = nomeCliente.trim().length > 1 && telefone.replace(/\D/g, "").length >= 10;
   const formularioValido = dadosClienteValidos && enderecoValido && itensResolvidos.length > 0;
+
+  // Base sobre a qual a taxa do cartão incide: produtos + frete (quando
+  // já escolhido) — é o valor que realmente vai passar na maquininha.
+  const freteValor = escolhida?.preco ?? 0;
+  const totalBase = subtotal + freteValor;
+  const totalFinal =
+    formaPagamento === "credito" ? calcularValorCredito(totalBase, parcelas) : totalBase;
 
   async function calcularFrete() {
     const limpo = cep.replace(/\D/g, "");
@@ -971,9 +1005,17 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
         `*Entrega:* ${escolhida.transportadora} ${escolhida.servico} — ${formatarBRL(escolhida.preco)}` +
           (escolhida.prazoDias != null ? ` (${escolhida.prazoDias} dia(s))` : ""),
       );
-      linhas.push(`*Total com frete:* ${formatarBRL(subtotal + escolhida.preco)}`);
     } else if (freteLocal) {
       linhas.push("*Entrega:* local (Dourados/MS) — combinar valor por aqui");
+    }
+
+    if (formaPagamento === "credito") {
+      linhas.push(
+        `*Pagamento:* Cartão de crédito em ${parcelas}x de ${formatarBRL(calcularParcela(totalBase, parcelas))}`,
+        `*Total no cartão:* ${formatarBRL(totalFinal)}`,
+      );
+    } else {
+      linhas.push("*Pagamento:* Pix", `*Total:* ${formatarBRL(totalFinal)}`);
     }
 
     linhas.push(
@@ -1304,13 +1346,71 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
                       <span className="resumo-rotulo">Entrega</span>
                       <span className="resumo-valor">{formatarBRL(escolhida.preco)}</span>
                     </div>
+                    {formaPagamento === "credito" && (
+                      <div className="resumo-linha">
+                        <span className="resumo-rotulo">Pagamento</span>
+                        <span className="resumo-valor">
+                          {parcelas}x de {formatarBRL(calcularParcela(totalBase, parcelas))}
+                        </span>
+                      </div>
+                    )}
                     <div className="resumo-linha resumo-total">
-                      <span>Total</span>
-                      <span>{formatarBRL(subtotal + escolhida.preco)}</span>
+                      <span>Total {formaPagamento === "credito" ? "no cartão" : "no Pix"}</span>
+                      <span>{formatarBRL(totalFinal)}</span>
                     </div>
                   </div>
                 )}
               </section>
+
+              <fieldset className="form-fieldset">
+                <legend>Forma de pagamento</legend>
+                <div className="payment-method-pills" role="group" aria-label="Forma de pagamento">
+                  <button
+                    type="button"
+                    className={`payment-pill ${formaPagamento === "pix" ? "active" : ""}`}
+                    onClick={() => setFormaPagamento("pix")}
+                  >
+                    <QrCode weight="bold" aria-hidden="true" />
+                    Pix
+                  </button>
+                  <button
+                    type="button"
+                    className={`payment-pill ${formaPagamento === "credito" ? "active" : ""}`}
+                    onClick={() => setFormaPagamento("credito")}
+                  >
+                    <CreditCard weight="bold" aria-hidden="true" />
+                    Cartão de crédito
+                  </button>
+                </div>
+
+                {formaPagamento === "pix" && (
+                  <p className="payment-pix-total">
+                    Total no Pix: <strong>{formatarBRL(totalBase)}</strong>
+                  </p>
+                )}
+
+                {formaPagamento === "credito" && (
+                  <div className="installment-options" role="group" aria-label="Número de parcelas">
+                    {Array.from({ length: PARCELAS_MAXIMAS }, (_, indice) => indice + 1).map((n) => (
+                      <button
+                        type="button"
+                        key={n}
+                        className={`installment-pill ${parcelas === n ? "active" : ""}`}
+                        onClick={() => setParcelas(n)}
+                      >
+                        <span className="installment-pill-parcelas">
+                          {n}x de {formatarBRL(calcularParcela(totalBase, n))}
+                        </span>
+                        {n > 1 && (
+                          <span className="installment-pill-total">
+                            Total {formatarBRL(calcularValorCredito(totalBase, n))}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </fieldset>
 
               <fieldset className="form-fieldset">
                 <legend>
