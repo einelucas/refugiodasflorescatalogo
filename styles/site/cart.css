@@ -1,0 +1,133 @@
+/* styles/site/cart.css — Carrinho: título, estado vazio, itens e subtotal. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   ✦ CARRINHO — lista de itens dentro do modal de checkout
+   ========================================================= */
+
+.public-site .cart-drawer-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--purple-deep);
+  margin: 0;
+}
+
+.public-site .cart-drawer-title svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.public-site .cart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+  padding: 48px 20px;
+}
+
+.public-site .cart-empty-icon {
+  font-size: 2.5rem;
+}
+.public-site .cart-empty p {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-body);
+}
+.public-site .cart-empty span {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.public-site .cart-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.public-site .cart-item {
+  display: flex;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(90, 30, 114, 0.1);
+}
+
+.public-site .cart-item:last-child {
+  border-bottom: none;
+}
+
+.public-site .cart-item-img {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--rose-light), var(--lavender));
+}
+
+.public-site .cart-item-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.public-site .cart-item-name {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.public-site .cart-item-price {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--purple-deep);
+}
+
+.public-site .cart-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: auto;
+  gap: 10px;
+}
+
+.public-site .cart-item-remove {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  color: #b4547a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.public-site .cart-item-remove:hover {
+  background: rgba(180, 84, 122, 0.1);
+  color: #8f2d4f;
+}
+
+.public-site .cart-subtotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+  margin-bottom: 4px;
+  border-bottom: 1px solid rgba(90, 30, 114, 0.12);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--purple-deep);
+}

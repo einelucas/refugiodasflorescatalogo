@@ -1,0 +1,94 @@
+/* styles/site/hero.css — Faixa de apresentação (foto, slogan, aviso de envio). Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   HERO BANNER — a foto e a apresentação da marca, agora como
+   uma faixa menor que rola com a página (não é mais sticky nem
+   encolhe via JS: só uma seção normal, mais simples e previsível).
+   ========================================================= */
+.public-site .hero-banner {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-image: url("/imagens/hero.webp");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  background-color: #2b2428;
+  min-height: clamp(150px, 20vw, 220px);
+  padding: 24px 20px;
+  text-align: center;
+}
+
+.public-site .hero-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+  pointer-events: none;
+}
+
+.public-site .hero-banner-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 30%,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.public-site .hero-banner-inner {
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: fadeUp 0.7s var(--ease-smooth) 0.05s forwards;
+}
+
+.public-site .hero-banner p {
+  color: white;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.public-site .brand-tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: clamp(1rem, 4vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 6px;
+}
+
+.public-site .brand-sub {
+  font-size: 0.85rem;
+  font-weight: 300;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--lavender);
+  margin-bottom: 6px;
+}
+.public-site .brand-delivery {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 0;
+}
+
+.public-site .delivery-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+  opacity: 0.9;
+  filter: invert(1);
+  opacity: 0.75;
+}

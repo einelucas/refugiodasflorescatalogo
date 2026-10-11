@@ -1,0 +1,21 @@
+/* styles/site/checkout-responsive.css — Checkout em telas de até 480 px. Ordem de carga: styles/site/index.css. */
+/* ── Responsividade ──────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .public-site .checkout-form {
+    padding: 20px 18px 28px;
+    gap: 16px;
+  }
+  .public-site .form-row {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .public-site .form-group--grow,
+  .public-site .form-group--small {
+    flex: 1;
+  }
+  .public-site .checkout-produto-img {
+    width: 56px;
+    height: 56px;
+  }
+}

@@ -1,0 +1,191 @@
+/* styles/site/catalog.css — Seção do catálogo: busca, filtros, títulos de categoria e grade base. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   CATALOG SECTION
+   ========================================================= */
+.public-site .catalog-section {
+  min-height: 60vh;
+  padding-bottom: 80px;
+}
+
+/* ── Search + Filter bar ────────────────────────────────── */
+.public-site .search-filter-bar {
+  position: sticky;
+  top: var(--header-bar-height);
+  z-index: 100;
+  background: rgba(253, 240, 247, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(140, 63, 175, 0.08);
+  padding: 16px 20px 12px;
+  transition: background 0.3s ease;
+  border-radius: 25px 25px 0 0;
+}
+
+.public-site .search-wrap {
+  position: relative;
+  margin-bottom: 18px;
+}
+
+.public-site .search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  color: var(--purple-mid);
+  pointer-events: none;
+}
+
+.public-site .search-input {
+  width: 100%;
+  padding: 11px 16px 11px 42px;
+  border-radius: 50px;
+  border: 1.5px solid rgba(140, 63, 175, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s;
+  outline: none;
+}
+
+.public-site .search-input::placeholder {
+  color: var(--text-muted);
+}
+.public-site .search-input:focus {
+  border-color: var(--purple-mid);
+  box-shadow: 0 0 0 3px rgba(140, 63, 175, 0.12);
+}
+
+/* Filter pills */
+.public-site .filter-pills {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+  /* Esmaece a borda direita pra dar a entender que dá pra arrastar
+     e ver mais categorias — sem isso a última pill corta seca na
+     tela e parece que acabou ali. */
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black calc(100% - 28px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black calc(100% - 28px),
+    transparent 100%
+  );
+}
+
+.public-site .filter-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.public-site .pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  border: 1.5px solid rgba(140, 63, 175, 0.25);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-body);
+  transition: all 0.35s var(--ease-smooth);
+  white-space: nowrap;
+}
+
+.public-site .pill:hover {
+  border-color: var(--purple-mid);
+  background: rgba(140, 63, 175, 0.06);
+  color: var(--purple-mid);
+}
+
+.public-site .pill.active {
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 3px 14px rgba(90, 30, 114, 0.22);
+}
+
+/* ── Category headers ───────────────────────────────────── */
+.public-site .category-header h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.public-site .category-icon {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.public-site .category-section {
+  padding: 40px 20px 0;
+}
+
+.public-site .category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.public-site .category-header h2 {
+  font-family: var(--font-body);
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-weight: 500;
+  color: var(--purple-deep);
+}
+
+.public-site .category-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    rgba(90, 30, 114, 0.3) 0%,
+    transparent 100%
+  );
+}
+
+/* ── Product Grid ───────────────────────────────────────── */
+.public-site .products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .public-site .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .public-site .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+  }
+  .public-site .catalog-section {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .public-site .category-section {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+  .public-site .search-filter-bar {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+}

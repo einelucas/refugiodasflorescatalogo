@@ -1,0 +1,164 @@
+/* styles/site/checkout.css — Checkout: cartão do modal, produto resumido e campos do formulário. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   ✦ CHECKOUT — Modal de pedido, frete e resumo
+   ========================================================= */
+
+.public-site .checkout-card {
+  max-width: 560px;
+}
+
+.public-site .checkout-form {
+  padding: 24px 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@media (min-width: 540px) {
+  .public-site .checkout-form {
+    padding: 28px 32px 36px;
+  }
+}
+
+.public-site .checkout-produto {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(90, 30, 114, 0.1);
+}
+
+.public-site .checkout-produto-img {
+  width: 68px;
+  height: 68px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: linear-gradient(135deg, var(--rose-light), var(--lavender));
+  flex-shrink: 0;
+}
+
+.public-site .checkout-produto-nome {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  line-height: 1.3;
+}
+
+.public-site .checkout-produto-preco {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--purple-deep);
+  margin-top: 2px;
+}
+
+/* ── Formulário ─────────────────────────────────────────── */
+
+.public-site .form-fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.public-site .form-fieldset legend {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--purple-deep);
+  padding: 0 0 6px;
+}
+
+.public-site .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.public-site .form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.public-site .form-row .form-group {
+  flex: 1;
+}
+.public-site .form-group--grow {
+  flex: 2;
+}
+.public-site .form-group--small {
+  flex: 1;
+}
+
+.public-site .form-group label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-body);
+}
+
+.public-site .form-group input,
+.public-site .form-group textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(90, 30, 114, 0.15);
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-dark);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+
+.public-site .form-group textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.public-site .form-group input:focus,
+.public-site .form-group textarea:focus {
+  outline: none;
+  border-color: var(--purple-mid);
+  box-shadow: 0 0 0 3px rgba(140, 63, 175, 0.14);
+}
+
+.public-site .form-group input:invalid:not(:placeholder-shown) {
+  border-color: #e0517a;
+}
+
+.public-site #quantidadeProduto {
+  max-width: 110px;
+}
+
+.public-site .campo-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  min-height: 1.1em;
+  color: var(--text-muted);
+}
+
+.public-site .campo-status--loading {
+  color: var(--purple-mid);
+}
+.public-site .campo-status--sucesso {
+  color: #1f9d55;
+}
+.public-site .campo-status--erro {
+  color: #d1355a;
+}
+
+.public-site .campo-status-spinner {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  border: 2px solid rgba(140, 63, 175, 0.25);
+  border-top-color: var(--purple-mid);
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}

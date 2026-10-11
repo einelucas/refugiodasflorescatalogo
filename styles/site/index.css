@@ -1,0 +1,27 @@
+/* =========================================================
+   CSS do site público (antigo app/refugio.css), dividido por
+   responsabilidade SEM reordenar regras: cada arquivo é um trecho
+   contíguo do original, importado na mesma sequência. Os arquivos
+   marcados como SOBRESCRITAS redefinem regras de vários domínios e
+   precisam continuar depois dos que sobrescrevem — não mude a ordem
+   sem conferir a cascata.
+   Todos os seletores ficam sob .public-site (não afetam o painel).
+   ========================================================= */
+
+@import "./tokens.css";
+@import "./base.css";
+@import "./header.css";
+@import "./hero.css";
+@import "./catalog.css";
+@import "./product-card.css";
+@import "./product-modal.css";
+@import "./footer.css";
+@import "./animations.css";
+@import "./catalog-overrides.css";
+@import "./checkout.css";
+@import "./shipping.css";
+@import "./payment.css";
+@import "./cart.css";
+@import "./checkout-responsive.css";
+@import "./next-adaptation.css";
+@import "./responsive.css";

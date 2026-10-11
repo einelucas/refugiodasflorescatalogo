@@ -1,0 +1,93 @@
+/* styles/site/catalog-overrides.css — SOBRESCRITAS: ajustes mobile-first do catálogo (grade, card, modal). Depende de vir depois dos arquivos acima. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   FINALIZAÇÃO DO CATÁLOGO — ajustes mobile-first
+   ========================================================= */
+
+/* O prompt pede 1 coluna no celular, 2 no tablet e 3/4 no desktop */
+.public-site .products-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 560px) {
+  .public-site .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 840px) {
+  .public-site .products-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1180px) {
+  .public-site .products-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.public-site .product-card {
+  will-change: transform, opacity;
+}
+
+.public-site .product-card.expanded {
+  z-index: 2;
+}
+
+.public-site .product-card:focus-within {
+  outline: 3px solid rgba(140, 63, 175, 0.25);
+  outline-offset: 3px;
+}
+
+.public-site .card-expand {
+  border-top: 1px solid rgba(90, 30, 114, 0.08);
+}
+
+.public-site .card-expand-note {
+  margin: 10px 0 12px;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--text-body);
+}
+
+.public-site .btn-ver,
+.public-site .btn-wa-card {
+  min-height: 40px;
+}
+
+.public-site .card-img-wrap img,
+.public-site .modal-img-wrap img {
+  background: linear-gradient(135deg, #f5ddeb 0%, #d9b3d9 100%);
+}
+
+.public-site .category-section.hidden {
+  display: none;
+}
+
+.public-site .modal-overlay {
+  padding: 0 12px;
+}
+
+.public-site.modal-open {
+  overflow: hidden;
+}
+
+.public-site .modal-badge:empty,
+.public-site .badge:empty {
+  display: none;
+}
+
+.public-site .product-card.is-hidden {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-site *,
+  .public-site *::before,
+  .public-site *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

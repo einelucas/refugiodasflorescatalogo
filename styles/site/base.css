@@ -1,0 +1,51 @@
+/* styles/site/base.css — Reset e base do site público (box-sizing, img, links, botões) e scrollbar. Ordem de carga: styles/site/index.css. */
+/* ── Reset & Base ───────────────────────────────────────── */
+.public-site *,
+.public-site *::before,
+.public-site *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.public-site {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+.public-site {
+  font-family: var(--font-body);
+  background: rgba(253, 240, 247, 0.82);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+.public-site img {
+  display: block;
+  max-width: 100%;
+}
+.public-site a {
+  text-decoration: none;
+  color: inherit;
+}
+.public-site button {
+  cursor: pointer;
+  font-family: inherit;
+  border: none;
+  background: none;
+}
+.public-site input {
+  font-family: inherit;
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+.public-site::-webkit-scrollbar {
+  width: 6px;
+}
+.public-site::-webkit-scrollbar-track {
+  background: #120520;
+}
+.public-site::-webkit-scrollbar-thumb {
+  background: var(--purple-mid);
+  border-radius: 3px;
+}

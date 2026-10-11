@@ -1,0 +1,37 @@
+/* styles/site/tokens.css — Variáveis da marca no escopo .public-site (cores, raios, sombras, fontes). Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   REFÚGIO DAS FLORES — style.css
+   Premium · Elegant · Mobile-first
+   ========================================================= */
+
+/* ── CSS Variables ──────────────────────────────────────── */
+.public-site {
+  --purple-deep: #5a1e72;
+  --purple-mid: #8c3faf;
+  --purple-soft: #a855c8;
+  --lavender: #d9b3d9;
+  --rose-light: #f5ddeb;
+  --rose-pale: #fdf0f7;
+  --white: #ffffff;
+  --text-dark: #2d1040;
+  --text-body: #5b3e6e;
+  --text-muted: #9b7aad;
+  --green-wa: #25d366;
+  --green-wa-dk: #128c7e;
+
+  --header-bar-height: 61px;
+  --radius-card: 22px;
+  --radius-btn: 50px;
+  --shadow-card:
+    0 2px 16px rgba(90, 30, 114, 0.08), 0 6px 28px rgba(90, 30, 114, 0.07);
+  --shadow-hover:
+    0 8px 32px rgba(90, 30, 114, 0.16), 0 18px 48px rgba(90, 30, 114, 0.1);
+  --shadow-glow: 0 0 60px rgba(140, 63, 175, 0.22);
+
+  --ease-smooth: cubic-bezier(0.34, 1.02, 0.64, 1);
+  --font-display: var(--font-serif), "Fraunces", Georgia, serif;
+  --font-body: "Poppins", "Helvetica Neue", sans-serif;
+}
+/* Fonte geral alinhada ao site de referência: Poppins.
+   A fonte de destaque (--font-serif) vem do next/font em app/layout.tsx —
+   aqui só declaramos o fallback caso a variável não chegue a carregar. */

@@ -1,0 +1,108 @@
+/* styles/site/payment.css — Forma de pagamento, parcelas e botão de enviar pedido. Ordem de carga: styles/site/index.css. */
+/* ── Forma de pagamento ─────────────────────────────────── */
+
+.public-site .payment-method-pills {
+  display: flex;
+  gap: 10px;
+}
+
+.public-site .payment-pill {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(90, 30, 114, 0.15);
+  background: #fff;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  cursor: pointer;
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    background 0.25s;
+}
+
+.public-site .payment-pill svg {
+  flex-shrink: 0;
+}
+
+.public-site .payment-pill:hover {
+  border-color: var(--purple-soft);
+}
+
+.public-site .payment-pill.active {
+  border-color: var(--purple-mid);
+  background: rgba(140, 63, 175, 0.06);
+  box-shadow: 0 0 0 3px rgba(140, 63, 175, 0.12);
+  color: var(--purple-deep);
+}
+
+.public-site .payment-pix-total {
+  margin-top: 12px;
+  font-size: 0.88rem;
+  color: var(--text-body);
+}
+
+.public-site .payment-pix-total strong {
+  color: var(--purple-deep);
+}
+
+.public-site .installment-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.public-site .installment-pill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(90, 30, 114, 0.15);
+  background: #fff;
+  text-align: center;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    background 0.25s;
+}
+
+.public-site .installment-pill:hover {
+  border-color: var(--purple-soft);
+}
+
+.public-site .installment-pill.active {
+  border-color: var(--purple-mid);
+  background: rgba(140, 63, 175, 0.06);
+  box-shadow: 0 0 0 3px rgba(140, 63, 175, 0.12);
+}
+
+.public-site .installment-pill-parcelas {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.public-site .installment-pill-total {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+/* ── Botão enviar pedido ────────────────────────────────── */
+
+.public-site .btn-enviar-pedido:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
