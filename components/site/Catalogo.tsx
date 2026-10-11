@@ -9,15 +9,12 @@ import {
   Minus,
   Plus,
   QrCode,
-  ShareNetwork,
-  ShoppingBag,
   ShoppingCart,
   Trash,
   Truck,
   X,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
-import { QUANTIDADE_MAXIMA_ITEM } from "@/config/catalogo";
 import { PARCELAS_MAXIMAS } from "@/config/pagamentos";
 import { ehEntregaLocal } from "@/lib/frete";
 import { normalizarTexto } from "@/lib/texto";
@@ -35,53 +32,16 @@ import type {
   FormaPagamento,
   ItemCarrinhoResolvido,
   OpcaoFrete,
-  ProdutoCatalogo,
   ProdutoComCategoria,
   RespostaFrete,
 } from "@/types";
 import { useCarrinho } from "./CarrinhoContext";
+import { WhatsAppIcon } from "./WhatsAppIcon";
 import { CatalogEmptyState } from "./catalogo/CatalogEmptyState";
 import { CatalogSearchBar } from "./catalogo/CatalogSearchBar";
 import { CategoryFilter } from "./catalogo/CategoryFilter";
 import { CategorySection } from "./catalogo/CategorySection";
-import { ProductBadge } from "./catalogo/ProductBadge";
-import { ProductImageCarousel } from "./catalogo/ProductImageCarousel";
-import { ProductPrice } from "./catalogo/ProductPrice";
-
-/// Compartilha o link direto do produto (?produto=<id>, lido por
-/// Catalogo pra reabrir o modal certo, e por generateMetadata pra
-/// gerar a prévia com foto/preço quando colado no WhatsApp).
-async function compartilharProduto(produto: ProdutoCatalogo) {
-  const url = `${window.location.origin}/?produto=${produto.id}`;
-  const texto = produto.sobConsulta ? produto.nome : `${produto.nome} — ${formatarBRL(produto.preco)}`;
-
-  if (navigator.share) {
-    try {
-      await navigator.share({ title: `${produto.nome} — Refúgio das Flores`, text: texto, url });
-      return;
-    } catch (erro) {
-      // Cancelar o painel de compartilhamento do navegador não é erro
-      // — qualquer outra falha cai pro link copiado, pra sempre dar
-      // algum feedback em vez de não fazer nada silenciosamente.
-      if ((erro as Error)?.name === "AbortError") return;
-    }
-  }
-
-  try {
-    await navigator.clipboard.writeText(url);
-    toast.success("Link do produto copiado!");
-  } catch {
-    toast.error("Não foi possível copiar o link.");
-  }
-}
-
-function WhatsAppIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-    </svg>
-  );
-}
+import { ProductDetailModal } from "./produto/ProductDetailModal";
 
 export function Catalogo({
   categorias,
@@ -149,21 +109,6 @@ export function Catalogo({
       .filter((categoria) => categoria.produtos.length > 0);
   }, [busca, categorias, filtro]);
 
-  useEffect(() => {
-    if (!aberto) return;
-
-    function fecharComEscape(evento: KeyboardEvent) {
-      if (evento.key === "Escape") setAberto(null);
-    }
-
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", fecharComEscape);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", fecharComEscape);
-    };
-  }, [aberto]);
-
   return (
     <main className="catalog-section">
       <div className="search-filter-bar">
@@ -202,321 +147,17 @@ export function Catalogo({
       {categoriasVisiveis.length === 0 && <CatalogEmptyState />}
 
       {aberto && (
-        <div className="modal-overlay open" role="presentation" onMouseDown={() => setAberto(null)}>
-          <div
-            className="modal-card checkout-card"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Detalhes de ${aberto.produto.nome}`}
-            onMouseDown={(evento) => evento.stopPropagation()}
-          >
-            <button
-              className="modal-share"
-              onClick={() => compartilharProduto(aberto.produto)}
-              aria-label="Compartilhar produto"
-            >
-              <ShareNetwork size={16} weight="bold" />
-            </button>
-            <button className="modal-close" onClick={() => setAberto(null)} aria-label="Fechar">
-              <X size={16} weight="bold" />
-            </button>
-            <DetalheProduto
-              key={aberto.produto.id}
-              produto={aberto.produto}
-              categoria={aberto.categoria}
-              whatsapp={whatsapp}
-              aoFechar={() => setAberto(null)}
-            />
-          </div>
-        </div>
+        <ProductDetailModal
+          key={aberto.produto.id}
+          product={aberto.produto}
+          category={aberto.categoria}
+          whatsapp={whatsapp}
+          onClose={() => setAberto(null)}
+        />
       )}
 
       <CarrinhoDrawer categorias={categorias} whatsapp={whatsapp} />
     </main>
-  );
-}
-
-function DetalheProduto({
-  produto,
-  categoria,
-  whatsapp,
-  aoFechar,
-}: {
-  produto: ProdutoCatalogo;
-  categoria: string;
-  whatsapp: string;
-  aoFechar: () => void;
-}) {
-  const [quantidade, setQuantidade] = useState(1);
-  const [cep, setCep] = useState("");
-  const [calculando, setCalculando] = useState(false);
-  const [opcoes, setOpcoes] = useState<OpcaoFrete[] | null>(null);
-  const [escolhida, setEscolhida] = useState<OpcaoFrete | null>(null);
-  const [erroFrete, setErroFrete] = useState<string | null>(null);
-  const [freteLocal, setFreteLocal] = useState(false);
-  const { adicionar, abrirCarrinho } = useCarrinho();
-
-  const total = (produto.preco ?? 0) * quantidade;
-
-  function alterarQuantidade(novaQuantidade: number) {
-    setQuantidade(Math.max(1, Math.min(QUANTIDADE_MAXIMA_ITEM, novaQuantidade)));
-    setOpcoes(null);
-    setEscolhida(null);
-  }
-
-  function adicionarAoCarrinho() {
-    adicionar(produto.id, quantidade);
-    toast.success(`${produto.nome} adicionado ao carrinho!`, {
-      action: { label: "Ver carrinho", onClick: () => abrirCarrinho() },
-    });
-    aoFechar();
-  }
-
-  function comprarAgora() {
-    adicionar(produto.id, quantidade);
-    aoFechar();
-    abrirCarrinho();
-  }
-
-  async function calcularFrete() {
-    const limpo = cep.replace(/\D/g, "");
-    if (limpo.length !== 8) {
-      setErroFrete("Digite um CEP com 8 dígitos.");
-      return;
-    }
-
-    setCalculando(true);
-    setErroFrete(null);
-    setOpcoes(null);
-    setEscolhida(null);
-    setFreteLocal(false);
-
-    try {
-      // Dourados/MS é entrega própria (carro/moto), não Correios ou
-      // transportadora — nem vale a pena cotar. Consulta o ViaCEP só
-      // pra saber a cidade e decidir se cai no caso local.
-      let cidadeDetectada = "";
-      let estadoDetectado = "";
-      try {
-        const respostaCep = await fetch(`https://viacep.com.br/ws/${limpo}/json/`);
-        const dadosCep: EnderecoViaCep = await respostaCep.json();
-        if (!dadosCep.erro) {
-          cidadeDetectada = dadosCep.localidade ?? "";
-          estadoDetectado = (dadosCep.uf ?? "").toUpperCase();
-        }
-      } catch {
-        // Sem resposta do ViaCEP: segue para a cotação normal.
-      }
-
-      if (ehEntregaLocal(cidadeDetectada, estadoDetectado)) {
-        setFreteLocal(true);
-        return;
-      }
-
-      const resposta = await fetch("/api/calcular-frete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itens: [{ produtoId: produto.id, quantidade }], cepDestino: limpo }),
-      });
-      const dados: RespostaFrete = await resposta.json();
-
-      if (!resposta.ok) {
-        setErroFrete(dados.erro ?? "Não foi possível calcular o frete.");
-        return;
-      }
-      if (!dados.opcoes?.length) {
-        setErroFrete(dados.aviso ?? "Nenhuma opção de entrega para este CEP.");
-        return;
-      }
-      setOpcoes(dados.opcoes);
-      setEscolhida(dados.opcoes[0]);
-    } catch {
-      setErroFrete("Erro de conexão. Tente novamente.");
-    } finally {
-      setCalculando(false);
-    }
-  }
-
-  function linkWhatsApp() {
-    const linhas = [`Olá! Tenho interesse em: ${produto.nome}`];
-
-    if (quantidade > 1) linhas.push(`Quantidade: ${quantidade}`);
-    if (!produto.sobConsulta) linhas.push(`Valor: ${formatarBRL(total)}`);
-
-    if (escolhida) {
-      linhas.push(
-        `Entrega: ${escolhida.transportadora} ${escolhida.servico} — ${formatarBRL(escolhida.preco)}` +
-          (escolhida.prazoDias != null ? ` (${escolhida.prazoDias} dia(s))` : ""),
-      );
-      linhas.push(`CEP: ${mascararCEP(cep)}`);
-      if (!produto.sobConsulta) {
-        linhas.push(`Total com frete: ${formatarBRL(total + escolhida.preco)}`);
-      }
-    }
-
-    return montarLinkWhatsApp(whatsapp, linhas.join("\n"));
-  }
-
-  return (
-    <div className="product-detail">
-      <ProductImageCarousel images={produto.imagens} variant="modal">
-        <ProductBadge badge={produto.badge} variant="modal" />
-      </ProductImageCarousel>
-
-      <div className="modal-info checkout-form">
-        <div>
-          <p className="modal-category">{categoria}</p>
-          <h2 className="modal-name">{produto.nome}</h2>
-          {produto.descricao && <p className="modal-desc">{produto.descricao}</p>}
-          <ProductPrice price={produto.preco} onRequest={produto.sobConsulta} variant="modal" />
-        </div>
-
-        {!produto.sobConsulta && (
-          <div className="quantity-row">
-            <span>Quantidade</span>
-            <div className="quantity-control">
-              <button type="button" onClick={() => alterarQuantidade(quantidade - 1)}>
-                −
-              </button>
-              <strong>{quantidade}</strong>
-              <button type="button" onClick={() => alterarQuantidade(quantidade + 1)}>
-                +
-              </button>
-            </div>
-          </div>
-        )}
-
-        {produto.freteHabilitado && !produto.sobConsulta && (
-          <section className="shipping-box">
-            <h3 className="shipping-title">
-              <Truck weight="bold" />
-              Calcular entrega
-            </h3>
-
-            <div className="shipping-input-row">
-              <input
-                className="shipping-input"
-                placeholder="00000-000"
-                value={cep}
-                onChange={(evento) => {
-                  setCep(mascararCEP(evento.target.value));
-                  setOpcoes(null);
-                  setEscolhida(null);
-                  setFreteLocal(false);
-                }}
-                onKeyDown={(evento) => {
-                  if (evento.key === "Enter") calcularFrete();
-                }}
-                aria-label="CEP para entrega"
-              />
-              <button
-                type="button"
-                className={`btn-calcular-frete ${calculando ? "is-loading" : ""}`}
-                onClick={calcularFrete}
-                disabled={calculando}
-              >
-                {calculando ? "Calculando" : "Calcular"}
-              </button>
-            </div>
-
-            {erroFrete && <p className="mensagem-erro">{erroFrete}</p>}
-
-            {freteLocal && (
-              <div className="frete-local-aviso">
-                <Car weight="bold" aria-hidden="true" />
-                <div>
-                  <strong>Você está em Dourados/MS!</strong>
-                  <p>
-                    Aqui a entrega é feita por nós mesmos, de carro ou moto — sem Correios ou
-                    transportadora. O valor da entrega local é combinado direto pelo WhatsApp.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {opcoes && (
-              <div className="frete-opcoes">
-                {opcoes.map((opcao) => {
-                  const selecionada =
-                    escolhida?.codigoServico === opcao.codigoServico &&
-                    escolhida?.servico === opcao.servico;
-
-                  return (
-                    <button
-                      type="button"
-                      key={`${opcao.codigoServico}-${opcao.servico}`}
-                      className={`frete-opcao ${selecionada ? "selecionada" : ""}`}
-                      onClick={() => setEscolhida(opcao)}
-                    >
-                      <span className="frete-opcao-principal">
-                        <span className="frete-opcao-nome">
-                          {opcao.transportadora} {opcao.servico}
-                        </span>
-                        <strong className="frete-opcao-preco">{formatarBRL(opcao.preco)}</strong>
-                      </span>
-                      {opcao.prazoDias != null && (
-                        <span className="frete-opcao-prazo">
-                          até {opcao.prazoDias} dia(s) útil(eis)
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {escolhida && (
-              <div className="resumo-pedido">
-                <div className="resumo-linha">
-                  <span className="resumo-rotulo">Produtos</span>
-                  <span className="resumo-valor">{formatarBRL(total)}</span>
-                </div>
-                <div className="resumo-linha">
-                  <span className="resumo-rotulo">Entrega</span>
-                  <span className="resumo-valor">{formatarBRL(escolhida.preco)}</span>
-                </div>
-                <div className="resumo-linha resumo-total">
-                  <span>Total</span>
-                  <span>{formatarBRL(total + escolhida.preco)}</span>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {(produto.sobConsulta || !produto.freteHabilitado) && (
-          <p className="product-notice">
-            {produto.sobConsulta
-              ? "Este produto é feito sob encomenda. Fale conosco para combinar valor e prazo."
-              : "A entrega deste item é combinada diretamente pelo WhatsApp."}
-          </p>
-        )}
-
-        {produto.sobConsulta ? (
-          <a
-            className="btn-whatsapp-modal"
-            href={linkWhatsApp()}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => toast.success("Abrindo o WhatsApp em outra aba…")}
-          >
-            <WhatsAppIcon />
-            Pedir pelo WhatsApp
-          </a>
-        ) : (
-          <>
-            <button type="button" className="btn-comprar-modal" onClick={comprarAgora}>
-              <ShoppingBag weight="bold" aria-hidden="true" />
-              Comprar
-            </button>
-            <button type="button" className="btn-add-carrinho-modal" onClick={adicionarAoCarrinho}>
-              <ShoppingCart weight="bold" aria-hidden="true" />
-              Adicionar ao carrinho
-            </button>
-          </>
-        )}
-      </div>
-    </div>
   );
 }
 
