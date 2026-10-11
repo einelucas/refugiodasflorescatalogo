@@ -1,0 +1,53 @@
+/* styles/site/animations.css — Animações de entrada dos cards (fadeUp) e helper observe-fade. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered card animation via JS applied nth-child delays */
+.public-site .product-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+.public-site .product-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.public-site .product-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+.public-site .product-card:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.public-site .product-card:nth-child(5) {
+  animation-delay: 0.25s;
+}
+.public-site .product-card:nth-child(6) {
+  animation-delay: 0.3s;
+}
+.public-site .product-card:nth-child(7) {
+  animation-delay: 0.35s;
+}
+.public-site .product-card:nth-child(8) {
+  animation-delay: 0.4s;
+}
+
+/* ── IntersectionObserver helper ─── */
+.public-site .observe-fade {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s var(--ease-smooth);
+}
+.public-site .observe-fade.visible {
+  opacity: 1;
+  transform: none;
+}

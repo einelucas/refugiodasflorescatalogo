@@ -5,16 +5,9 @@
    ========================================================= */
 
 import { z } from "zod";
-
-// Limites dos Correios para pacote. Espelham os CHECK do banco.
-export const LIMITES = {
-  pesoMaxKg: 30,
-  alturaMin: 2,
-  larguraMin: 11,
-  comprimentoMin: 16,
-  somaMax: 200,
-  dimensaoMax: 100,
-} as const;
+import { QUANTIDADE_MAXIMA_ITEM } from "@/config/catalogo";
+// Limites dos Correios para pacote (espelham os CHECK do banco).
+import { LIMITES } from "@/config/frete";
 
 const dimensoesBase = {
   pesoKg: z.coerce
@@ -130,7 +123,7 @@ export const calcularFretePublicoSchema = z.object({
     .array(
       z.object({
         produtoId: z.string().uuid(),
-        quantidade: z.coerce.number().int().min(1).max(10),
+        quantidade: z.coerce.number().int().min(1).max(QUANTIDADE_MAXIMA_ITEM),
       }),
     )
     .min(1)
@@ -146,7 +139,7 @@ export const testarFreteSchema = z
   .object({
     ...dimensoesBase,
     cepDestino: cepSchema,
-    quantidade: z.coerce.number().int().min(1).max(10).default(1),
+    quantidade: z.coerce.number().int().min(1).max(QUANTIDADE_MAXIMA_ITEM).default(1),
     valorDeclarado: z.coerce.number().positive().max(100000).default(100),
   })
   .refine(somaOk, msgSoma);

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { PARCELAS_MAXIMAS, TAXAS_PARCELAMENTO } from "@/config/pagamentos";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,17 +10,6 @@ export function formatarBRL(valor: number | null): string {
   if (valor === null) return "A consultar";
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
-
-// Preço à vista (Pix) é o valor cheio; no cartão embutimos a taxa da
-// maquininha, que varia por número de parcelas — inclusive em 1x, que
-// já cobra taxa (só o Pix é isento).
-export const TAXAS_PARCELAMENTO: Record<number, number> = {
-  1: 0.042,
-  2: 0.0609,
-  3: 0.0743,
-};
-
-export const PARCELAS_MAXIMAS = 3;
 
 export function calcularValorCredito(valor: number, parcelas: number): number {
   const taxa = TAXAS_PARCELAMENTO[parcelas] ?? 0;

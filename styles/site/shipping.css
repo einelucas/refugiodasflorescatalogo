@@ -1,0 +1,194 @@
+/* styles/site/shipping.css — Frete: botão calcular, mensagens de erro, entrega local, opções e resumo do pedido. Ordem de carga: styles/site/index.css. */
+/* ── Botão calcular frete ───────────────────────────────── */
+
+.public-site .btn-calcular-frete {
+  padding: 13px 18px;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  color: #fff;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 500;
+  transition:
+    opacity 0.3s,
+    transform 0.3s var(--ease-smooth);
+}
+
+.public-site .btn-calcular-frete:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.public-site .btn-calcular-frete:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.public-site .btn-calcular-frete.is-loading {
+  position: relative;
+  color: transparent;
+}
+
+.public-site .btn-calcular-frete.is-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: girar 0.7s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Mensagens de erro ──────────────────────────────────── */
+
+.public-site .mensagem-erro {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(224, 81, 122, 0.1);
+  color: #b6244a;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+/* ── Aviso de entrega local (Dourados/MS) ──────────────────
+   Cidade própria da loja: entrega feita de carro/moto, sem
+   transportadora — não faz sentido cotar frete pelos Correios. */
+.public-site .frete-local-aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(140, 63, 175, 0.08);
+  border: 1px solid rgba(140, 63, 175, 0.18);
+  color: var(--text-dark);
+}
+
+.public-site .frete-local-aviso svg {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  color: var(--purple-mid);
+}
+
+.public-site .frete-local-aviso strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 0.88rem;
+  color: var(--purple-deep);
+}
+
+.public-site .frete-local-aviso p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-body);
+}
+
+/* ── Opções de frete ────────────────────────────────────── */
+
+.public-site .frete-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.public-site .frete-opcao {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(90, 30, 114, 0.15);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    background 0.25s;
+}
+
+.public-site .frete-opcao:hover {
+  border-color: var(--purple-soft);
+}
+
+.public-site .frete-opcao.selecionada {
+  border-color: var(--purple-mid);
+  background: rgba(140, 63, 175, 0.06);
+  box-shadow: 0 0 0 3px rgba(140, 63, 175, 0.12);
+}
+
+.public-site .frete-opcao-principal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.public-site .frete-opcao-nome {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+.public-site .frete-opcao-preco {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--purple-deep);
+  white-space: nowrap;
+}
+
+.public-site .frete-opcao-prazo {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+/* ── Resumo do pedido ───────────────────────────────────── */
+
+.public-site .resumo-pedido {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--rose-pale);
+}
+
+.public-site .resumo-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.86rem;
+}
+
+.public-site .resumo-rotulo {
+  color: var(--text-muted);
+}
+.public-site .resumo-valor {
+  color: var(--text-dark);
+  font-weight: 500;
+  text-align: right;
+}
+
+.public-site .resumo-total {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(90, 30, 114, 0.15);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--purple-deep);
+}

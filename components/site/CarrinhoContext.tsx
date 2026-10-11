@@ -1,11 +1,10 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-
-export type ItemCarrinho = { produtoId: string; quantidade: number };
+import { QUANTIDADE_MAXIMA_ITEM } from "@/config/catalogo";
+import type { ItemCarrinho } from "@/types";
 
 const CHAVE_STORAGE = "refugio:carrinho";
-const QUANTIDADE_MAXIMA = 10;
 
 type CarrinhoContextValor = {
   itens: ItemCarrinho[];
@@ -53,11 +52,11 @@ export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
       if (existente) {
         return atual.map((item) =>
           item.produtoId === produtoId
-            ? { ...item, quantidade: Math.min(QUANTIDADE_MAXIMA, item.quantidade + quantidade) }
+            ? { ...item, quantidade: Math.min(QUANTIDADE_MAXIMA_ITEM, item.quantidade + quantidade) }
             : item,
         );
       }
-      return [...atual, { produtoId, quantidade: Math.min(QUANTIDADE_MAXIMA, quantidade) }];
+      return [...atual, { produtoId, quantidade: Math.min(QUANTIDADE_MAXIMA_ITEM, quantidade) }];
     });
   }, []);
 
@@ -70,7 +69,7 @@ export function CarrinhoProvider({ children }: { children: React.ReactNode }) {
       if (quantidade <= 0) return atual.filter((item) => item.produtoId !== produtoId);
       return atual.map((item) =>
         item.produtoId === produtoId
-          ? { ...item, quantidade: Math.min(QUANTIDADE_MAXIMA, quantidade) }
+          ? { ...item, quantidade: Math.min(QUANTIDADE_MAXIMA_ITEM, quantidade) }
           : item,
       );
     });

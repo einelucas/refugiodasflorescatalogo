@@ -5,6 +5,9 @@
    Number() em alguma rota nova.
    ========================================================= */
 
+import type { Embalagem as EmbalagemDb } from "@prisma/client";
+import type { Embalagem } from "@/types";
+
 type ComDecimais = Record<string, unknown>;
 
 const CAMPOS_DECIMAIS = [
@@ -33,4 +36,16 @@ export function serializar<T extends ComDecimais>(obj: T): T {
 
 export function serializarLista<T extends ComDecimais>(lista: T[]): T[] {
   return lista.map(serializar);
+}
+
+/// Embalagem do banco → contrato do painel (Decimais viram number).
+export function serializarEmbalagem(e: EmbalagemDb): Embalagem {
+  return {
+    id: e.id,
+    nome: e.nome,
+    alturaCm: Number(e.alturaCm),
+    larguraCm: Number(e.larguraCm),
+    comprimentoCm: Number(e.comprimentoCm),
+    pesoTaraKg: Number(e.pesoTaraKg),
+  };
 }

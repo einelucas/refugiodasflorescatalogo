@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { serializarEmbalagem } from "@/lib/serializar";
 import { GerenciarEmbalagens } from "@/components/admin/GerenciarEmbalagens";
 
 export const dynamic = "force-dynamic";
@@ -16,14 +17,7 @@ export default async function EmbalagensPage() {
         </p>
       </div>
       <GerenciarEmbalagens
-        iniciais={embalagens.map((e) => ({
-          id: e.id,
-          nome: e.nome,
-          alturaCm: Number(e.alturaCm),
-          larguraCm: Number(e.larguraCm),
-          comprimentoCm: Number(e.comprimentoCm),
-          pesoTaraKg: Number(e.pesoTaraKg),
-        }))}
+        iniciais={embalagens.map(serializarEmbalagem)}
       />
     </div>
   );

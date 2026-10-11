@@ -1,0 +1,101 @@
+/* styles/site/header.css — Cabeçalho fixo: marca, logo e botão do carrinho. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   HEADER — barra fixa e compacta (logo + nome), sempre visível.
+   Deixa de ser a hero de foto que encolhia no scroll: agora fica
+   parada no topo, com espaço reservado pro ícone do carrinho à
+   direita quando ele existir.
+   ========================================================= */
+.public-site .site-header-bar {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: rgba(253, 240, 247, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(140, 63, 175, 0.1);
+}
+
+.public-site .site-header-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: min(100%, 1480px);
+  margin-inline: auto;
+  padding: 10px 20px;
+}
+
+.public-site .site-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.public-site .site-header-logo-ring {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  box-shadow: 0 2px 10px rgba(90, 30, 114, 0.3);
+}
+
+.public-site .site-header-logo-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.public-site .site-header-wordmark {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--purple-deep);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.public-site .site-header-cart {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: none;
+  background: rgba(140, 63, 175, 0.08);
+  color: var(--purple-deep);
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    transform 0.2s var(--ease-smooth);
+}
+
+.public-site .site-header-cart:hover {
+  background: rgba(140, 63, 175, 0.16);
+  transform: translateY(-1px);
+}
+
+.public-site .site-header-cart-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(253, 240, 247, 0.92);
+}

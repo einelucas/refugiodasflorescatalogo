@@ -6,26 +6,9 @@
    real visto pelo cliente final.
    ========================================================= */
 
+import type { DimensoesPacote, OpcaoFrete, ResultadoFrete } from "@/types";
+
 const ENDPOINT = "https://api.frenet.com.br/shipping/quote";
-
-export type DimensoesPacote = {
-  pesoKg: number;
-  alturaCm: number;
-  larguraCm: number;
-  comprimentoCm: number;
-};
-
-export type OpcaoFrete = {
-  transportadora: string;
-  servico: string;
-  codigoServico: string;
-  preco: number;
-  prazoDias: number | null;
-};
-
-export type ResultadoFrete =
-  | { ok: true; opcoes: OpcaoFrete[]; aviso?: string }
-  | { ok: false; status: number; erro: string };
 
 type RespostaFrenet = {
   ShippingSevicesArray?: Array<{

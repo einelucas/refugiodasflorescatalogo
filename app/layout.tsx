@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { Fraunces, Poppins } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import "./refugio.css";
+// CSS do site público, dividido por responsabilidade (ordem em index.css).
+import "@/styles/site/index.css";
 
 const bodyFont = Poppins({
   subsets: ["latin"],

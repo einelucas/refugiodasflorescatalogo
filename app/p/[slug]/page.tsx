@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { sanitizarHtmlInstitucional } from "@/lib/sanitizar-html";
 
 export const revalidate = 300;
 
@@ -14,8 +15,9 @@ export default async function PaginaConteudo({ params }: { params: Promise<{ slu
       {pagina.conteudoHtml && (
         <div
           className="content-page-body"
-          // O conteúdo vem do painel, escrito pela própria dona do site.
-          dangerouslySetInnerHTML={{ __html: pagina.conteudoHtml }}
+          dangerouslySetInnerHTML={{
+            __html: sanitizarHtmlInstitucional(pagina.conteudoHtml),
+          }}
         />
       )}
     </article>

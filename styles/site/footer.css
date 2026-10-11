@@ -1,0 +1,246 @@
+/* styles/site/footer.css — Rodapé (marca, atendimento, redes sociais) e botão voltar ao topo. Ordem de carga: styles/site/index.css. */
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.public-site .site-footer {
+  background: linear-gradient(
+    160deg,
+    #2a0845 0%,
+    var(--purple-deep) 50%,
+    #1a0330 100%
+  );
+  padding: 56px 24px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-radius: 25px 25px 0 0;
+}
+
+.public-site .site-footer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 80% 60% at 50% 0%,
+    rgba(217, 179, 217, 0.08) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+.public-site .footer-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Grade do rodapé: uma coluna centralizada no celular, três
+   colunas alinhadas à esquerda a partir do tablet — marca,
+   atendimento e páginas institucionais, em vez de tudo empilhado
+   no centro. */
+.public-site .footer-grid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  text-align: center;
+}
+
+.public-site .footer-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.public-site .footer-col-title {
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--lavender);
+  opacity: 0.85;
+}
+
+@media (min-width: 720px) {
+  .public-site .footer-grid {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 32px;
+    text-align: left;
+  }
+
+  .public-site .footer-col {
+    align-items: flex-start;
+    flex: 1;
+  }
+
+  .public-site .footer-col-brand {
+    flex: 1.3;
+  }
+
+  .public-site .footer-grid .footer-logo-wrap,
+  .public-site .footer-grid .footer-location,
+  .public-site .footer-grid .footer-shipping {
+    justify-content: flex-start;
+  }
+
+  .public-site .footer-grid .footer-socials {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+  }
+
+  .public-site .footer-grid .footer-pages {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin: 0;
+  }
+}
+
+.public-site .footer-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 26px;
+  gap: 8px;
+}
+
+.public-site .footer-flower {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+}
+
+.public-site .footer-brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #fff;
+  line-height: 1;
+}
+
+.public-site .footer-tagline-mini {
+  margin: -6px 0 4px;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.public-site .footer-location,
+.public-site .footer-shipping {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 4px;
+}
+
+.public-site .footer-info-icon {
+  width: 17px;
+  height: 17px;
+  object-fit: contain;
+  flex-shrink: 0;
+
+  filter: invert(1);
+  opacity: 0.65;
+}
+
+.public-site .footer-socials {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (min-width: 540px) {
+  .public-site .footer-socials {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 20px;
+  }
+}
+
+.public-site .social-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.85rem;
+  transition:
+    color 0.35s ease,
+    transform 0.35s var(--ease-smooth);
+}
+
+.public-site .social-link:hover {
+  color: var(--lavender);
+  transform: translateY(-1px);
+}
+.public-site .social-link svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+/* Ícone do WhatsApp é preenchido, não traçado. */
+.public-site .social-link--whatsapp svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.public-site .footer-bottom {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  text-align: center;
+}
+
+.public-site .footer-copy {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.04em;
+}
+
+/* ── Voltar ao topo ─────────────────────────────────────── */
+.public-site .botao-voltar-topo {
+  position: fixed;
+  right: 20px;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 90;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--purple-deep), var(--purple-mid));
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(90, 30, 114, 0.32);
+  transition:
+    transform 0.25s var(--ease-smooth),
+    box-shadow 0.25s;
+  animation: fadeUp 0.3s var(--ease-smooth);
+}
+
+.public-site .botao-voltar-topo:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(90, 30, 114, 0.42);
+}

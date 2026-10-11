@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { Catalogo } from "@/components/site/Catalogo";
+import { normalizarUrlImagem, serializarCategoriaCatalogo } from "@/lib/catalogo";
+import { buscarWhatsappLoja } from "@/lib/loja";
 import { formatarBRL } from "@/lib/utils";
 
 export const revalidate = 60;
-
-function normalizarUrlImagem(url: string) {
-  if (/^(https?:)?\/\//i.test(url) || url.startsWith("data:")) return url;
-  return url.startsWith("/") ? url : `/${url}`;
-}
 
 type PropsPagina = {
   searchParams: Promise<{ produto?: string }>;
@@ -45,7 +42,7 @@ export async function generateMetadata({ searchParams }: PropsPagina): Promise<M
 
 export default async function HomePage({ searchParams }: PropsPagina) {
   const { produto: produtoInicialId } = await searchParams;
-  const [categorias, config] = await Promise.all([
+  const [categorias, whatsapp] = await Promise.all([
     db.categoria.findMany({
       where: { ativa: true },
       orderBy: { ordem: "asc" },
@@ -57,35 +54,14 @@ export default async function HomePage({ searchParams }: PropsPagina) {
         },
       },
     }),
-    db.configuracao.findUnique({ where: { chave: "whatsappLoja" } }),
+    buscarWhatsappLoja(),
   ]);
-
-  const whatsapp = (config?.valor as string) ?? process.env.WHATSAPP_LOJA ?? "556796072932";
 
   return (
     <Catalogo
       whatsapp={whatsapp}
       produtoInicialId={produtoInicialId}
-      categorias={categorias.map((categoria) => ({
-        id: categoria.id,
-        nome: categoria.nome,
-        slug: categoria.slug,
-        titulo: categoria.titulo,
-        subtitulo: categoria.subtitulo,
-        produtos: categoria.produtos.map((produto) => ({
-          id: produto.id,
-          nome: produto.nome,
-          descricao: produto.descricao,
-          preco: produto.preco === null ? null : Number(produto.preco),
-          sobConsulta: produto.sobConsulta,
-          badge: produto.badge,
-          freteHabilitado: produto.freteHabilitado,
-          imagens: produto.imagens.map((imagem) => ({
-            url: normalizarUrlImagem(imagem.url),
-            alt: imagem.alt ?? produto.nome,
-          })),
-        })),
-      }))}
+      categorias={categorias.map(serializarCategoriaCatalogo)}
     />
   );
 }
