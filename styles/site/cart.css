@@ -100,6 +100,16 @@
   gap: 10px;
 }
 
+/* Os botões −/+ do carrinho usam ícones SVG, que o preflight do
+   Tailwind deixa como display:block — e um bloco não obedece ao
+   text-align:center do botão, ficando colado à esquerda. Centraliza
+   o ícone em cada coluna do controle. */
+.public-site .cart-item .quantity-control button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .public-site .cart-item-remove {
   border: none;
   background: none;
