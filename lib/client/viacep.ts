@@ -22,6 +22,8 @@ export async function consultarViaCep(
     bairro: dados.bairro ?? "",
     localidade: dados.localidade ?? "",
     uf: (dados.uf ?? "").toUpperCase(),
-    erro: dados.erro === true,
+    // O ViaCEP responde `"erro": "true"` (string) para CEP inexistente —
+    // por isso a checagem é por valor truthy, como no código original.
+    erro: Boolean(dados.erro),
   };
 }

@@ -22,3 +22,10 @@ export type {
   ResultadoFrete,
 } from "./frete";
 export type { FormaPagamento, ItemCarrinho, ItemCarrinhoResolvido } from "./carrinho";
+export type {
+  CampoEndereco,
+  DadosCliente,
+  EnderecoEntrega,
+  StatusCep,
+  TotaisPedido,
+} from "./checkout";
