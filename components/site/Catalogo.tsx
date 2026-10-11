@@ -4,11 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Car,
-  CaretLeft,
-  CaretRight,
   CreditCard,
   MapPin,
-  MagnifyingGlass,
   Minus,
   Plus,
   QrCode,
@@ -28,7 +25,6 @@ import {
   calcularParcela,
   calcularValorCredito,
   formatarBRL,
-  formatarParcelamento,
   mascararCEP,
   mascararTelefone,
 } from "@/lib/utils";
@@ -44,23 +40,13 @@ import type {
   RespostaFrete,
 } from "@/types";
 import { useCarrinho } from "./CarrinhoContext";
-
-/// Placeholder borrado enquanto a foto real carrega — mesmo degradê
-/// rosa/lavanda usado no fundo dos cards, só que como blur em vez de
-/// aparecer/sumir seco.
-const PLACEHOLDER_BLUR =
-  "data:image/svg+xml;charset=utf-8," +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5DDEB"/><stop offset="1" stop-color="#D9B3D9"/></linearGradient></defs><rect width="12" height="12" fill="url(#g)"/></svg>`,
-  );
-
-function classeBadge(badge: string | null) {
-  const valor = normalizarTexto(badge ?? "").replace(/\s+/g, "-");
-  if (valor.includes("mais-vendido")) return "badge-mais-vendido";
-  if (valor.includes("novo")) return "badge-novo";
-  if (valor.includes("promocao")) return "badge-promocao";
-  return "";
-}
+import { CatalogEmptyState } from "./catalogo/CatalogEmptyState";
+import { CatalogSearchBar } from "./catalogo/CatalogSearchBar";
+import { CategoryFilter } from "./catalogo/CategoryFilter";
+import { CategorySection } from "./catalogo/CategorySection";
+import { ProductBadge } from "./catalogo/ProductBadge";
+import { ProductImageCarousel } from "./catalogo/ProductImageCarousel";
+import { ProductPrice } from "./catalogo/ProductPrice";
 
 /// Compartilha o link direto do produto (?produto=<id>, lido por
 /// Catalogo pra reabrir o modal certo, e por generateMetadata pra
@@ -181,78 +167,39 @@ export function Catalogo({
   return (
     <main className="catalog-section">
       <div className="search-filter-bar">
-        <label className="search-wrap">
-          <MagnifyingGlass className="search-icon" size={17} weight="bold" aria-hidden="true" />
-          <input
-            type="search"
-            className="search-input"
-            placeholder="Buscar produto..."
-            value={busca}
-            onChange={(evento) => setBusca(evento.target.value)}
-            aria-label="Buscar produto"
-          />
-        </label>
-
-        <div className="filter-pills" role="group" aria-label="Filtrar por categoria">
-          <FiltroBotao ativo={filtro === "todas"} onClick={() => setFiltro("todas")}>
-            Todos
-          </FiltroBotao>
-          {categorias.map((categoria) => (
-            <FiltroBotao
-              key={categoria.id}
-              ativo={filtro === categoria.slug}
-              onClick={() => setFiltro(categoria.slug)}
-            >
-              {categoria.nome === "Presentes Personalizados" ? "Presentes" : categoria.nome}
-            </FiltroBotao>
-          ))}
-        </div>
+        <CatalogSearchBar value={busca} onChange={setBusca} />
+        <CategoryFilter
+          categories={categorias}
+          selectedCategory={filtro}
+          onChange={setFiltro}
+        />
       </div>
 
       <div className="catalog-container">
         {categoriasVisiveis.map((categoria) => (
-          <section key={categoria.id} className="category-section">
-            <div className="category-header">
-              <div>
-                <h2>{categoria.titulo}</h2>
-                {categoria.subtitulo && <p className="category-subtitle">{categoria.subtitulo}</p>}
-              </div>
-              <div className="category-line" />
-            </div>
-
-            <div className="products-grid">
-              {categoria.produtos.map((produto) => (
-                <CardProduto
-                  key={produto.id}
-                  produto={produto}
-                  categoria={categoria.nome}
-                  expandido={expandido === produto.id}
-                  onAlternar={() => setExpandido((id) => (id === produto.id ? null : produto.id))}
-                  onAbrir={() => setAberto({ produto, categoria: categoria.nome })}
-                  onComprar={() => {
-                    adicionar(produto.id, 1);
-                    abrirCarrinho();
-                  }}
-                  onAdicionarCarrinho={() => {
-                    adicionar(produto.id, 1);
-                    toast.success(`${produto.nome} adicionado ao carrinho!`, {
-                      action: { label: "Ver carrinho", onClick: () => abrirCarrinho() },
-                    });
-                  }}
-                />
-              ))}
-            </div>
-          </section>
+          <CategorySection
+            key={categoria.id}
+            category={categoria}
+            expandedProductId={expandido}
+            onToggleProduct={(produto) =>
+              setExpandido((id) => (id === produto.id ? null : produto.id))
+            }
+            onOpenProduct={(produto) => setAberto({ produto, categoria: categoria.nome })}
+            onBuyProduct={(produto) => {
+              adicionar(produto.id, 1);
+              abrirCarrinho();
+            }}
+            onAddProductToCart={(produto) => {
+              adicionar(produto.id, 1);
+              toast.success(`${produto.nome} adicionado ao carrinho!`, {
+                action: { label: "Ver carrinho", onClick: () => abrirCarrinho() },
+              });
+            }}
+          />
         ))}
       </div>
 
-      {categoriasVisiveis.length === 0 && (
-        <div className="empty-state">
-          <div className="empty-icon">🌸</div>
-          <p>Não encontramos esse arranjo</p>
-          <span>Tente outra palavra ou escolha uma das categorias ali em cima</span>
-        </div>
-      )}
+      {categoriasVisiveis.length === 0 && <CatalogEmptyState />}
 
       {aberto && (
         <div className="modal-overlay open" role="presentation" onMouseDown={() => setAberto(null)}>
@@ -289,171 +236,6 @@ export function Catalogo({
   );
 }
 
-function FiltroBotao({
-  ativo,
-  onClick,
-  children,
-}: {
-  ativo: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button className={`pill ${ativo ? "active" : ""}`} onClick={onClick} type="button">
-      {children}
-    </button>
-  );
-}
-
-function CardProduto({
-  produto,
-  categoria,
-  expandido,
-  onAlternar,
-  onAbrir,
-  onComprar,
-  onAdicionarCarrinho,
-}: {
-  produto: ProdutoCatalogo;
-  categoria: string;
-  expandido: boolean;
-  onAlternar: () => void;
-  onAbrir: () => void;
-  onComprar: () => void;
-  onAdicionarCarrinho: () => void;
-}) {
-  const [indice, setIndice] = useState(0);
-  const imagem = produto.imagens[indice];
-
-  function navegar(direcao: number) {
-    setIndice((atual) => (atual + direcao + produto.imagens.length) % produto.imagens.length);
-  }
-
-  return (
-    <article
-      className={`product-card ${expandido ? "expanded" : ""}`}
-      tabIndex={0}
-      onClick={onAlternar}
-      onKeyDown={(evento) => {
-        if (evento.key === "Enter" || evento.key === " ") {
-          evento.preventDefault();
-          onAlternar();
-        }
-      }}
-      aria-label={produto.nome}
-    >
-      <div className="card-img-wrap">
-        {produto.badge && (
-          <span className={`badge ${classeBadge(produto.badge)}`}>{produto.badge}</span>
-        )}
-
-        {imagem ? (
-          <Image
-            src={imagem.url}
-            alt={imagem.alt}
-            fill
-            sizes="(min-width: 1180px) 23vw, (min-width: 640px) 30vw, 45vw"
-            placeholder="blur"
-            blurDataURL={PLACEHOLDER_BLUR}
-          />
-        ) : (
-          <div className="img-placeholder">🌸</div>
-        )}
-
-        {produto.imagens.length > 1 && (
-          <>
-            <button
-              type="button"
-              className="card-carousel-arrow card-carousel-arrow--left"
-              onClick={(evento) => {
-                evento.stopPropagation();
-                navegar(-1);
-              }}
-              aria-label="Imagem anterior"
-            >
-              <CaretLeft size={18} weight="bold" />
-            </button>
-            <button
-              type="button"
-              className="card-carousel-arrow card-carousel-arrow--right"
-              onClick={(evento) => {
-                evento.stopPropagation();
-                navegar(1);
-              }}
-              aria-label="Próxima imagem"
-            >
-              <CaretRight size={18} weight="bold" />
-            </button>
-            <div className="image-dots" aria-hidden="true">
-              {produto.imagens.map((_, posicao) => (
-                <span key={posicao} className={posicao === indice ? "active" : ""} />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      <div className="card-body">
-        <p className="card-category">{categoria}</p>
-        <h3 className="card-name">{produto.nome}</h3>
-        <div className="card-price">
-          {produto.sobConsulta || produto.preco === null ? (
-            "A consultar"
-          ) : (
-            <>
-              <span className="card-price-pix">{formatarBRL(produto.preco)} no Pix</span>
-              <span className="card-price-parcelas">{formatarParcelamento(produto.preco)}</span>
-            </>
-          )}
-        </div>
-        {produto.descricao && <p className="card-desc">{produto.descricao}</p>}
-      </div>
-
-      <div className="card-expand" aria-hidden={!expandido}>
-        <p className="card-expand-note">Veja os detalhes ou compre agora mesmo.</p>
-        <div className="expand-buttons">
-          {!produto.sobConsulta && (
-            <>
-              <button
-                className="btn-comprar"
-                type="button"
-                onClick={(evento) => {
-                  evento.stopPropagation();
-                  onComprar();
-                }}
-              >
-                <ShoppingBag className="btn-comprar-icon" weight="bold" aria-hidden="true" />
-                Comprar
-              </button>
-              <button
-                className="btn-add-carrinho"
-                type="button"
-                onClick={(evento) => {
-                  evento.stopPropagation();
-                  onAdicionarCarrinho();
-                }}
-              >
-                <ShoppingCart weight="bold" aria-hidden="true" />
-                Adicionar ao carrinho
-              </button>
-            </>
-          )}
-          <button
-            className="btn-ver"
-            type="button"
-            onClick={(evento) => {
-              evento.stopPropagation();
-              onAbrir();
-            }}
-          >
-            Ver Produto
-          </button>
-        </div>
-      </div>
-    </article>
-  );
-}
-
 function DetalheProduto({
   produto,
   categoria,
@@ -465,7 +247,6 @@ function DetalheProduto({
   whatsapp: string;
   aoFechar: () => void;
 }) {
-  const [indice, setIndice] = useState(0);
   const [quantidade, setQuantidade] = useState(1);
   const [cep, setCep] = useState("");
   const [calculando, setCalculando] = useState(false);
@@ -476,7 +257,6 @@ function DetalheProduto({
   const { adicionar, abrirCarrinho } = useCarrinho();
 
   const total = (produto.preco ?? 0) * quantidade;
-  const imagem = produto.imagens[indice];
 
   function alterarQuantidade(novaQuantidade: number) {
     setQuantidade(Math.max(1, Math.min(QUANTIDADE_MAXIMA_ITEM, novaQuantidade)));
@@ -579,70 +359,16 @@ function DetalheProduto({
 
   return (
     <div className="product-detail">
-      <div className="modal-img-wrap">
-        {imagem ? (
-          <Image
-            src={imagem.url}
-            alt={imagem.alt}
-            fill
-            sizes="(min-width: 1180px) 560px, 92vw"
-            placeholder="blur"
-            blurDataURL={PLACEHOLDER_BLUR}
-          />
-        ) : (
-          <div className="img-placeholder">🌸</div>
-        )}
-
-        {produto.badge && (
-          <span className={`modal-badge ${classeBadge(produto.badge)}`}>{produto.badge}</span>
-        )}
-
-        {produto.imagens.length > 1 && (
-          <>
-            <button
-              type="button"
-              className="modal-carousel-arrow modal-carousel-arrow--left"
-              onClick={() =>
-                setIndice((atual) =>
-                  atual === 0 ? produto.imagens.length - 1 : atual - 1,
-                )
-              }
-              aria-label="Imagem anterior"
-            >
-              <CaretLeft size={18} weight="bold" />
-            </button>
-            <button
-              type="button"
-              className="modal-carousel-arrow modal-carousel-arrow--right"
-              onClick={() => setIndice((atual) => (atual + 1) % produto.imagens.length)}
-              aria-label="Próxima imagem"
-            >
-              <CaretRight size={18} weight="bold" />
-            </button>
-            <div className="image-dots modal-image-dots" aria-hidden="true">
-              {produto.imagens.map((_, posicao) => (
-                <span key={posicao} className={posicao === indice ? "active" : ""} />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
+      <ProductImageCarousel images={produto.imagens} variant="modal">
+        <ProductBadge badge={produto.badge} variant="modal" />
+      </ProductImageCarousel>
 
       <div className="modal-info checkout-form">
         <div>
           <p className="modal-category">{categoria}</p>
           <h2 className="modal-name">{produto.nome}</h2>
           {produto.descricao && <p className="modal-desc">{produto.descricao}</p>}
-          <div className="modal-price">
-            {produto.sobConsulta || produto.preco === null ? (
-              "A consultar"
-            ) : (
-              <>
-                <span className="modal-price-pix">{formatarBRL(produto.preco)} no Pix</span>
-                <span className="modal-price-parcelas">{formatarParcelamento(produto.preco)}</span>
-              </>
-            )}
-          </div>
+          <ProductPrice price={produto.preco} onRequest={produto.sobConsulta} variant="modal" />
         </div>
 
         {!produto.sobConsulta && (
