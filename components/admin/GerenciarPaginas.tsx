@@ -13,15 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-type Pagina = {
-  id: string;
-  slug: string;
-  titulo: string;
-  conteudoHtml: string | null;
-  visivelNoMenu: boolean;
-  ordem: number;
-};
+import { gerarSlug } from "@/lib/slug";
+import type { Pagina } from "@/types";
 
 const VAZIA: Pagina = {
   id: "",
@@ -31,16 +24,6 @@ const VAZIA: Pagina = {
   visivelNoMenu: true,
   ordem: 0,
 };
-
-function gerarSlug(t: string) {
-  return t
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
 
 export function GerenciarPaginas({ iniciais }: { iniciais: Pagina[] }) {
   const router = useRouter();

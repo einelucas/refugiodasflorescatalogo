@@ -11,19 +11,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-
-type Categoria = {
-  id: string;
-  nome: string;
-  slug: string;
-  titulo: string;
-  subtitulo: string | null;
-  aliases: string[];
-  iconeUrl: string | null;
-  ordem: number;
-  ativa: boolean;
-  totalProdutos: number;
-};
+import { gerarSlug } from "@/lib/slug";
+import type { CategoriaAdmin } from "@/types";
 
 const VAZIA = {
   id: "",
@@ -37,18 +26,7 @@ const VAZIA = {
   ativa: true,
 };
 
-/// "Presentes Personalizados" → "presentes-personalizados"
-function gerarSlug(texto: string) {
-  return texto
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-export function GerenciarCategorias({ iniciais }: { iniciais: Categoria[] }) {
+export function GerenciarCategorias({ iniciais }: { iniciais: CategoriaAdmin[] }) {
   const router = useRouter();
   const [aberto, setAberto] = useState(false);
   const [f, setF] = useState(VAZIA);
@@ -59,7 +37,7 @@ export function GerenciarCategorias({ iniciais }: { iniciais: Categoria[] }) {
     setAberto(true);
   }
 
-  function abrirEdicao(c: Categoria) {
+  function abrirEdicao(c: CategoriaAdmin) {
     setF({
       id: c.id,
       nome: c.nome,
@@ -105,7 +83,7 @@ export function GerenciarCategorias({ iniciais }: { iniciais: Categoria[] }) {
     }
   }
 
-  async function remover(c: Categoria) {
+  async function remover(c: CategoriaAdmin) {
     if (!confirm(`Desativar a categoria "${c.nome}"?`)) return;
     const r = await fetch(`/api/admin/categorias/${c.id}`, { method: "DELETE" });
     const d = await r.json();

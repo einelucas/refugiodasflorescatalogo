@@ -9,16 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { LIMITES } from "@/lib/validacao";
-
-type Embalagem = {
-  id: string;
-  nome: string;
-  alturaCm: number;
-  larguraCm: number;
-  comprimentoCm: number;
-  pesoTaraKg: number;
-};
+import { LIMITES } from "@/config/frete";
+import type { Embalagem } from "@/types";
 
 const VAZIA = { id: "", nome: "", alturaCm: 0, larguraCm: 0, comprimentoCm: 0, pesoTaraKg: 0 };
 

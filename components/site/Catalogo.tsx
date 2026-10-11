@@ -20,6 +20,10 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { toast } from "sonner";
+import { QUANTIDADE_MAXIMA_ITEM } from "@/config/catalogo";
+import { PARCELAS_MAXIMAS } from "@/config/pagamentos";
+import { ehEntregaLocal } from "@/lib/frete";
+import { normalizarTexto } from "@/lib/texto";
 import {
   calcularParcela,
   calcularValorCredito,
@@ -27,8 +31,18 @@ import {
   formatarParcelamento,
   mascararCEP,
   mascararTelefone,
-  PARCELAS_MAXIMAS,
 } from "@/lib/utils";
+import { montarLinkWhatsApp } from "@/lib/whatsapp";
+import type {
+  CategoriaCatalogo,
+  EnderecoViaCep,
+  FormaPagamento,
+  ItemCarrinhoResolvido,
+  OpcaoFrete,
+  ProdutoCatalogo,
+  ProdutoComCategoria,
+  RespostaFrete,
+} from "@/types";
 import { useCarrinho } from "./CarrinhoContext";
 
 /// Placeholder borrado enquanto a foto real carrega — mesmo degradê
@@ -40,53 +54,8 @@ const PLACEHOLDER_BLUR =
     `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F5DDEB"/><stop offset="1" stop-color="#D9B3D9"/></linearGradient></defs><rect width="12" height="12" fill="url(#g)"/></svg>`,
   );
 
-type Imagem = { url: string; alt: string };
-type Produto = {
-  id: string;
-  nome: string;
-  descricao: string | null;
-  preco: number | null;
-  sobConsulta: boolean;
-  badge: string | null;
-  freteHabilitado: boolean;
-  imagens: Imagem[];
-};
-type Categoria = {
-  id: string;
-  nome: string;
-  slug: string;
-  titulo: string;
-  subtitulo: string | null;
-  produtos: Produto[];
-};
-type OpcaoFrete = {
-  transportadora: string;
-  servico: string;
-  codigoServico: string;
-  preco: number;
-  prazoDias: number | null;
-};
-
-type ProdutoAberto = { produto: Produto; categoria: string };
-
-type EnderecoViaCep = {
-  logradouro?: string;
-  bairro?: string;
-  localidade?: string;
-  uf?: string;
-  erro?: boolean;
-};
-
-function normalizar(texto: string) {
-  return texto
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .trim();
-}
-
 function classeBadge(badge: string | null) {
-  const valor = normalizar(badge ?? "").replace(/\s+/g, "-");
+  const valor = normalizarTexto(badge ?? "").replace(/\s+/g, "-");
   if (valor.includes("mais-vendido")) return "badge-mais-vendido";
   if (valor.includes("novo")) return "badge-novo";
   if (valor.includes("promocao")) return "badge-promocao";
@@ -96,7 +65,7 @@ function classeBadge(badge: string | null) {
 /// Compartilha o link direto do produto (?produto=<id>, lido por
 /// Catalogo pra reabrir o modal certo, e por generateMetadata pra
 /// gerar a prévia com foto/preço quando colado no WhatsApp).
-async function compartilharProduto(produto: Produto) {
+async function compartilharProduto(produto: ProdutoCatalogo) {
   const url = `${window.location.origin}/?produto=${produto.id}`;
   const texto = produto.sobConsulta ? produto.nome : `${produto.nome} — ${formatarBRL(produto.preco)}`;
 
@@ -133,14 +102,14 @@ export function Catalogo({
   whatsapp,
   produtoInicialId,
 }: {
-  categorias: Categoria[];
+  categorias: CategoriaCatalogo[];
   whatsapp: string;
   produtoInicialId?: string;
 }) {
   const [filtro, setFiltro] = useState("todas");
   const [busca, setBusca] = useState("");
   const [expandido, setExpandido] = useState<string | null>(null);
-  const [aberto, setAberto] = useState<ProdutoAberto | null>(null);
+  const [aberto, setAberto] = useState<ProdutoComCategoria | null>(null);
   const { adicionar, abrirCarrinho } = useCarrinho();
 
   // Link direto pra um produto (?produto=<id>, ex.: compartilhado pelo
@@ -178,7 +147,7 @@ export function Catalogo({
   }, [aberto]);
 
   const categoriasVisiveis = useMemo(() => {
-    const termo = normalizar(busca);
+    const termo = normalizarTexto(busca);
 
     return categorias
       .filter((categoria) => filtro === "todas" || categoria.slug === filtro)
@@ -186,7 +155,7 @@ export function Catalogo({
         ...categoria,
         produtos: categoria.produtos.filter((produto) => {
           if (!termo) return true;
-          return normalizar(
+          return normalizarTexto(
             `${produto.nome} ${produto.descricao ?? ""} ${categoria.nome}`,
           ).includes(termo);
         }),
@@ -345,7 +314,7 @@ function CardProduto({
   onComprar,
   onAdicionarCarrinho,
 }: {
-  produto: Produto;
+  produto: ProdutoCatalogo;
   categoria: string;
   expandido: boolean;
   onAlternar: () => void;
@@ -491,7 +460,7 @@ function DetalheProduto({
   whatsapp,
   aoFechar,
 }: {
-  produto: Produto;
+  produto: ProdutoCatalogo;
   categoria: string;
   whatsapp: string;
   aoFechar: () => void;
@@ -510,7 +479,7 @@ function DetalheProduto({
   const imagem = produto.imagens[indice];
 
   function alterarQuantidade(novaQuantidade: number) {
-    setQuantidade(Math.max(1, Math.min(10, novaQuantidade)));
+    setQuantidade(Math.max(1, Math.min(QUANTIDADE_MAXIMA_ITEM, novaQuantidade)));
     setOpcoes(null);
     setEscolhida(null);
   }
@@ -559,7 +528,7 @@ function DetalheProduto({
         // Sem resposta do ViaCEP: segue para a cotação normal.
       }
 
-      if (normalizar(cidadeDetectada) === "dourados" && estadoDetectado === "MS") {
+      if (ehEntregaLocal(cidadeDetectada, estadoDetectado)) {
         setFreteLocal(true);
         return;
       }
@@ -569,7 +538,7 @@ function DetalheProduto({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ itens: [{ produtoId: produto.id, quantidade }], cepDestino: limpo }),
       });
-      const dados = await resposta.json();
+      const dados: RespostaFrete = await resposta.json();
 
       if (!resposta.ok) {
         setErroFrete(dados.erro ?? "Não foi possível calcular o frete.");
@@ -605,7 +574,7 @@ function DetalheProduto({
       }
     }
 
-    return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
+    return montarLinkWhatsApp(whatsapp, linhas.join("\n"));
   }
 
   return (
@@ -828,11 +797,17 @@ function DetalheProduto({
 /// Checkout do carrinho inteiro — mesma lógica de endereço/CEP/frete/
 /// WhatsApp que antes vivia em DetalheProduto, só que somando todos
 /// os itens de uma vez (a Frenet cota a caixa consolidada).
-function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; whatsapp: string }) {
+function CarrinhoDrawer({
+  categorias,
+  whatsapp,
+}: {
+  categorias: CategoriaCatalogo[];
+  whatsapp: string;
+}) {
   const { itens, aberto, fecharCarrinho, definirQuantidade, remover, limpar } = useCarrinho();
 
   const mapaProdutos = useMemo(() => {
-    const mapa = new Map<string, { produto: Produto; categoria: string }>();
+    const mapa = new Map<string, ProdutoComCategoria>();
     for (const categoria of categorias) {
       for (const produto of categoria.produtos) {
         mapa.set(produto.id, { produto, categoria: categoria.nome });
@@ -850,7 +825,7 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
           const encontrado = mapaProdutos.get(item.produtoId);
           return encontrado ? { ...item, produto: encontrado.produto } : null;
         })
-        .filter((item): item is { produtoId: string; quantidade: number; produto: Produto } => item !== null),
+        .filter((item): item is ItemCarrinhoResolvido => item !== null),
     [itens, mapaProdutos],
   );
 
@@ -866,7 +841,7 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
   const [erroFrete, setErroFrete] = useState<string | null>(null);
   const [freteLocal, setFreteLocal] = useState(false);
 
-  const [formaPagamento, setFormaPagamento] = useState<"pix" | "credito">("pix");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("pix");
   const [parcelas, setParcelas] = useState(1);
 
   const [nomeCliente, setNomeCliente] = useState("");
@@ -953,7 +928,7 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
     try {
       // Endereço já foi buscado (autofill do CEP) — usa direto, sem
       // nova chamada ao ViaCEP.
-      if (normalizar(cidade) === "dourados" && estado === "MS") {
+      if (ehEntregaLocal(cidade, estado)) {
         setFreteLocal(true);
         return;
       }
@@ -969,7 +944,7 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
           cepDestino: limpo,
         }),
       });
-      const dados = await resposta.json();
+      const dados: RespostaFrete = await resposta.json();
 
       if (!resposta.ok) {
         setErroFrete(dados.erro ?? "Não foi possível calcular o frete.");
@@ -1034,7 +1009,7 @@ function CarrinhoDrawer({ categorias, whatsapp }: { categorias: Categoria[]; wha
       linhas.push("", `*Observações:* ${observacoes.trim()}`);
     }
 
-    return `https://wa.me/${whatsapp}?text=${encodeURIComponent(linhas.join("\n"))}`;
+    return montarLinkWhatsApp(whatsapp, linhas.join("\n"));
   }
 
   function finalizarPedido() {

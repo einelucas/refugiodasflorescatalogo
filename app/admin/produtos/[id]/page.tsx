@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { serializarEmbalagem } from "@/lib/serializar";
 import { FormularioProduto } from "@/components/admin/FormularioProduto";
 
 export const dynamic = "force-dynamic";
@@ -20,14 +21,7 @@ export default async function EditarProdutoPage({ params }: { params: Promise<{ 
       <h1 className="font-serif text-2xl">{produto.nome}</h1>
       <FormularioProduto
         categorias={categorias}
-        embalagens={embalagens.map((e) => ({
-          id: e.id,
-          nome: e.nome,
-          alturaCm: Number(e.alturaCm),
-          larguraCm: Number(e.larguraCm),
-          comprimentoCm: Number(e.comprimentoCm),
-          pesoTaraKg: Number(e.pesoTaraKg),
-        }))}
+        embalagens={embalagens.map(serializarEmbalagem)}
         inicial={{
           id: produto.id,
           nome: produto.nome,

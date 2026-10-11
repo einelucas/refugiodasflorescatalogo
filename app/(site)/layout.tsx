@@ -3,12 +3,12 @@ import { db } from "@/lib/db";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { BotaoVoltarTopo } from "@/components/site/BotaoVoltarTopo";
 import { CarrinhoProvider } from "@/components/site/CarrinhoContext";
+import { buscarWhatsappLoja } from "@/lib/loja";
+import { montarLinkWhatsApp } from "@/lib/whatsapp";
 
 export const revalidate = 300;
 
-const WHATSAPP_MESSAGE = encodeURIComponent(
-  "Olá, vim pelo catálogo e gostaria de mais informações!",
-);
+const WHATSAPP_MESSAGE = "Olá, vim pelo catálogo e gostaria de mais informações!";
 
 function WhatsAppIcon({ className = "" }: { className?: string }) {
   return (
@@ -19,17 +19,16 @@ function WhatsAppIcon({ className = "" }: { className?: string }) {
 }
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const [paginas, config] = await Promise.all([
+  const [paginas, whatsapp] = await Promise.all([
     db.pagina.findMany({
       where: { visivelNoMenu: true },
       orderBy: { ordem: "asc" },
       select: { slug: true, titulo: true },
     }),
-    db.configuracao.findUnique({ where: { chave: "whatsappLoja" } }),
+    buscarWhatsappLoja(),
   ]);
 
-  const whatsapp = (config?.valor as string) ?? process.env.WHATSAPP_LOJA ?? "556796072932";
-  const whatsappUrl = `https://wa.me/${whatsapp}?text=${WHATSAPP_MESSAGE}`;
+  const whatsappUrl = montarLinkWhatsApp(whatsapp, WHATSAPP_MESSAGE);
 
   return (
     <CarrinhoProvider>

@@ -28,49 +28,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { LIMITES } from "@/lib/validacao";
-import { mascararCEP } from "@/lib/utils";
-
-type Categoria = { id: string; nome: string };
-type Embalagem = {
-  id: string;
-  nome: string;
-  alturaCm: number;
-  larguraCm: number;
-  comprimentoCm: number;
-  pesoTaraKg: number;
-};
-type Imagem = { url: string; alt: string | null };
-type OpcaoFrete = {
-  transportadora: string;
-  servico: string;
-  codigoServico: string;
-  preco: number;
-  prazoDias: number | null;
-};
-
-export type ProdutoForm = {
-  id?: string;
-  nome: string;
-  categoriaId: string;
-  descricao: string | null;
-  preco: number | null;
-  sobConsulta: boolean;
-  badge: string | null;
-  pesoKg: number;
-  alturaCm: number;
-  larguraCm: number;
-  comprimentoCm: number;
-  valorDeclarado: number | null;
-  freteHabilitado: boolean;
-  medidasVerificadas: boolean;
-  ordem: number;
-  ativo: boolean;
-  imagens: Imagem[];
-};
+import { LIMITES } from "@/config/frete";
+import {
+  PASTA_UPLOAD_PRODUTOS,
+  QUALIDADE_WEBP,
+  TAMANHO_MAXIMO_IMAGEM,
+  TIPOS_IMAGEM_ACEITOS,
+} from "@/config/upload";
+import { formatarBRL, mascararCEP } from "@/lib/utils";
+import type {
+  CategoriaOpcao,
+  Embalagem,
+  OpcaoFrete,
+  ProdutoForm,
+  RespostaFrete,
+} from "@/types";
 
 const CEP_TESTE_PADRAO = "01001-000";
-const QUALIDADE_WEBP = 0.85;
 
 /// Converte a foto pra WebP no navegador antes do envio. O upload
 /// vai direto do navegador pro Vercel Blob (ver enviarFoto), então
@@ -123,7 +97,7 @@ export function FormularioProduto({
   embalagens,
   inicial,
 }: {
-  categorias: Categoria[];
+  categorias: CategoriaOpcao[];
   embalagens: Embalagem[];
   inicial?: ProdutoForm;
 }) {
@@ -193,15 +167,12 @@ export function FormularioProduto({
   }
 
   async function enviarFoto(arquivo: File) {
-    const tiposAceitos = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-    const tamanhoMaximo = 6 * 1024 * 1024;
-
-    if (!tiposAceitos.includes(arquivo.type)) {
+    if (!TIPOS_IMAGEM_ACEITOS.includes(arquivo.type)) {
       toast.error("Use uma imagem JPG, PNG, WebP ou AVIF.");
       return;
     }
 
-    if (arquivo.size > tamanhoMaximo) {
+    if (arquivo.size > TAMANHO_MAXIMO_IMAGEM) {
       toast.error("A imagem deve ter no máximo 6 MB.");
       return;
     }
@@ -220,7 +191,7 @@ export function FormularioProduto({
       }
 
       const extensao = arquivoParaEnviar.type.split("/")[1].replace("jpeg", "jpg");
-      const pathname = `produtos/${crypto.randomUUID()}.${extensao}`;
+      const pathname = `${PASTA_UPLOAD_PRODUTOS}${crypto.randomUUID()}.${extensao}`;
 
       // Upload direto do navegador para o Vercel Blob. A rota
       // /api/admin/upload apenas autentica e gera o token temporário.
@@ -264,7 +235,7 @@ export function FormularioProduto({
           quantidade: 1,
         }),
       });
-      const d = await r.json();
+      const d: RespostaFrete = await r.json();
 
       if (!r.ok) {
         setErroTeste(d.erro ?? "Não foi possível testar.");
@@ -445,7 +416,7 @@ export function FormularioProduto({
                 {enviandoFoto ? "…" : "Enviar"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/avif"
+                  accept={TIPOS_IMAGEM_ACEITOS.join(",")}
                   className="hidden"
                   onChange={(e) => {
                     const arq = e.target.files?.[0];
@@ -613,9 +584,7 @@ export function FormularioProduto({
                     {opcoes.map((o) => (
                       <li key={o.codigoServico + o.servico}>
                         {o.transportadora} {o.servico} —{" "}
-                        <strong>
-                          {o.preco.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                        </strong>
+                        <strong>{formatarBRL(o.preco)}</strong>
                         {o.prazoDias != null && ` · ${o.prazoDias} dia(s)`}
                       </li>
                     ))}

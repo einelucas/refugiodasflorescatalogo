@@ -9,11 +9,13 @@
 
 import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { exigirAdmin } from "@/lib/auth";
+import {
+  PASTA_UPLOAD_PRODUTOS,
+  TAMANHO_MAXIMO_IMAGEM,
+  TIPOS_IMAGEM_ACEITOS,
+} from "@/config/upload";
 
 export const dynamic = "force-dynamic";
-
-const TIPOS_ACEITOS = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-const TAMANHO_MAX = 6 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
@@ -28,13 +30,13 @@ export async function POST(request: Request) {
           throw new Error("Não autorizado.");
         }
 
-        if (!pathname.startsWith("produtos/")) {
+        if (!pathname.startsWith(PASTA_UPLOAD_PRODUTOS)) {
           throw new Error("Caminho de upload inválido.");
         }
 
         return {
-          allowedContentTypes: TIPOS_ACEITOS,
-          maximumSizeInBytes: TAMANHO_MAX,
+          allowedContentTypes: TIPOS_IMAGEM_ACEITOS,
+          maximumSizeInBytes: TAMANHO_MAXIMO_IMAGEM,
           addRandomSuffix: false,
         };
       },

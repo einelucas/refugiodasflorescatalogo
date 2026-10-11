@@ -17,13 +17,18 @@
 
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { LIMITES } from "../config/frete";
 import { PRODUTOS_LEGADO, CATEGORIAS_LEGADO } from "./dados-legado";
 
 const db = new PrismaClient();
 const DRY = process.env.DRY_RUN === "1";
 
-const MIN = { altura: 2, largura: 11, comprimento: 16 } as const;
-const SOMA_MAX = 200;
+const MIN = {
+  altura: LIMITES.alturaMin,
+  largura: LIMITES.larguraMin,
+  comprimento: LIMITES.comprimentoMin,
+} as const;
+const SOMA_MAX = LIMITES.somaMax;
 
 function precoParaNumero(texto: string): number | null {
   if (/consultar|encomenda/i.test(texto)) return null;
