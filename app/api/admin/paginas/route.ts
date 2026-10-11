@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { exigirAdmin } from "@/lib/auth";
 import { codigoPrisma } from "@/lib/erros-prisma";
+import { sanitizarHtmlInstitucional } from "@/lib/sanitizar-html";
 import { paginaSchema } from "@/lib/validacao";
 
 export const dynamic = "force-dynamic";
@@ -25,8 +26,11 @@ export async function POST(request: Request) {
   }
 
   try {
+    const conteudoHtml = parsed.data.conteudoHtml
+      ? sanitizarHtmlInstitucional(parsed.data.conteudoHtml)
+      : null;
     const pagina = await db.pagina.create({
-      data: { ...parsed.data, conteudoHtml: parsed.data.conteudoHtml ?? null },
+      data: { ...parsed.data, conteudoHtml },
     });
     return Response.json({ pagina }, { status: 201 });
   } catch (erro) {
