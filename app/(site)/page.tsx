@@ -30,7 +30,7 @@ export async function generateMetadata({ searchParams }: PropsPagina): Promise<M
   const imagem = produto.imagens[0] ? normalizarUrlImagem(produto.imagens[0].url) : undefined;
 
   return {
-    title: titulo,
+    title: { absolute: titulo },
     description: descricao,
     openGraph: {
       title: titulo,
