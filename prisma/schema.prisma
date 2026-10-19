@@ -45,6 +45,9 @@ model Produto {
   badge     String?
 
   imagens ProdutoImagem[]
+  fichaTecnica FichaTecnica[]
+  producoes Producao[]
+  vendas Venda[]
 
   // ── Campos de frete: lidos SOMENTE no servidor ──
   pesoKg          Decimal  @map("peso_kg") @db.Decimal(6, 3)
@@ -118,6 +121,70 @@ model Configuracao {
   valor Json
 
   @@map("configuracoes")
+}
+
+
+// ───────────────────── Gestão interna ─────────────────────
+// Produção consome matérias-primas. Vendas registram faturamento
+// separadamente para impedir consumo duplo da mesma matéria-prima.
+
+model MateriaPrima {
+  id          String @id @default(uuid()) @db.Uuid
+  nome        String @unique
+  quantidade  Decimal @default(0) @db.Decimal(12, 3)
+  unidade     String @default("un")
+  fichaTecnica FichaTecnica[]
+
+  @@map("materias_primas")
+}
+
+model FichaTecnica {
+  produtoId    String @map("produto_id") @db.Uuid
+  materiaPrimaId String @map("materia_prima_id") @db.Uuid
+  quantidade   Decimal @db.Decimal(12, 3)
+  produto      Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  materiaPrima MateriaPrima @relation(fields: [materiaPrimaId], references: [id], onDelete: Restrict)
+
+  @@id([produtoId, materiaPrimaId])
+  @@map("fichas_tecnicas")
+}
+
+model Producao {
+  id         String @id @default(uuid()) @db.Uuid
+  produtoId  String @map("produto_id") @db.Uuid
+  produto    Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  nomeProduto String @map("nome_produto")
+  quantidade Int
+  criadaEm   DateTime @default(now()) @map("criada_em") @db.Timestamptz
+
+  @@index([criadaEm])
+  @@map("producoes")
+}
+
+model Venda {
+  id          String @id @default(uuid()) @db.Uuid
+  produtoId   String @map("produto_id") @db.Uuid
+  produto     Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  nomeProduto String @map("nome_produto")
+  quantidade  Int
+  precoUnitario Decimal @map("preco_unitario") @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(12, 2)
+  cliente     String?
+  criadaEm    DateTime @default(now()) @map("criada_em") @db.Timestamptz
+
+  @@index([criadaEm])
+  @@map("vendas")
+}
+
+model Despesa {
+  id          String @id @default(uuid()) @db.Uuid
+  descricao   String
+  valor       Decimal @db.Decimal(12, 2)
+  categoria   String
+  criadaEm    DateTime @default(now()) @map("criada_em") @db.Timestamptz
+
+  @@index([criadaEm])
+  @@map("despesas")
 }
 
 // ───────────────────────── Auth ─────────────────────────
