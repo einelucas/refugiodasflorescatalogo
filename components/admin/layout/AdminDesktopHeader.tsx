@@ -19,7 +19,7 @@ export function AdminDesktopHeader({ pathname }: { pathname: string }) {
           Refúgio
         </Link>
 
-        <nav className="flex min-w-0 flex-1 items-center gap-1" aria-label="Navegação do painel">
+        <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto [scrollbar-width:thin]" aria-label="Navegação do painel">
           {NAV_ADMIN.map((item) => (
             <AdminNavItem
               key={item.href}
