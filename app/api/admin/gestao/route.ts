@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { ZodError, z } from "zod";
 import { exigirAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { db, dbHttp } from "@/lib/db";
 import { serializar } from "@/lib/serializar";
 import { GestaoErro, excluirMateriaPrima, registrarDespesa, registrarProducao, registrarVenda, salvarFicha, salvarMateriaPrima } from "@/lib/gestao/servico";
 
@@ -24,13 +24,13 @@ export async function GET() {
   if (!await exigirAdmin()) return Response.json({ erro: "Não autorizado." }, { status: 401 });
   try {
     const [materias, produtos, producoes, vendas, despesas] = await Promise.all([
-      db.materiaPrima.findMany({ orderBy: { nome: "asc" } }),
-      db.produto.findMany({ orderBy: { nome: "asc" }, select: {
+      dbHttp.materiaPrima.findMany({ orderBy: { nome: "asc" } }),
+      dbHttp.produto.findMany({ orderBy: { nome: "asc" }, select: {
         id: true, nome: true, preco: true, fichaTecnica: { select: { materiaPrimaId: true, quantidade: true } },
       } }),
-      db.producao.findMany({ orderBy: { criadaEm: "desc" }, take: 500 }),
-      db.venda.findMany({ orderBy: { criadaEm: "desc" }, take: 1000 }),
-      db.despesa.findMany({ orderBy: { criadaEm: "desc" }, take: 1000 }),
+      dbHttp.producao.findMany({ orderBy: { criadaEm: "desc" }, take: 500 }),
+      dbHttp.venda.findMany({ orderBy: { criadaEm: "desc" }, take: 1000 }),
+      dbHttp.despesa.findMany({ orderBy: { criadaEm: "desc" }, take: 1000 }),
     ]);
     return Response.json(serializar({ materias, produtos, producoes, vendas, despesas }), {
       headers: { "Cache-Control": "private, no-store" },
@@ -40,7 +40,7 @@ export async function GET() {
     // Nenhum lançamento é simulado nem gravado se as tabelas ainda não existem.
     if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2021") {
       try {
-        const lista = await db.produto.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true, preco: true } });
+        const lista = await dbHttp.produto.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true, preco: true } });
         return Response.json({
           schemaPendente: true, materias: [],
           produtos: lista.map(p => ({ ...p, fichaTecnica: [] })),

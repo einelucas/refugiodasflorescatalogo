@@ -11,7 +11,7 @@
    ========================================================= */
 
 import { neonConfig } from "@neondatabase/serverless";
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaNeon, PrismaNeonHTTP } from "@prisma/adapter-neon";
 import { PrismaClient } from "@prisma/client";
 import ws from "ws";
 
@@ -22,6 +22,7 @@ if (typeof WebSocket === "undefined") {
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  prismaHttp: PrismaClient | undefined;
 };
 
 function criarCliente() {
@@ -41,10 +42,23 @@ function criarCliente() {
   });
 }
 
+// Cliente somente-leitura via HTTP. Evita o timeout de ~10s do WebSocket
+// quando o Neon está suspenso (primeiro acesso após ociosidade).
+function criarClienteHttp() {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error("DATABASE_URL não definida.");
+  }
+  const adapter = new PrismaNeonHTTP(connectionString, {});
+  return new PrismaClient({ adapter, log: ["error"] });
+}
+
 export const db = globalForPrisma.prisma ?? criarCliente();
+export const dbHttp = globalForPrisma.prismaHttp ?? criarClienteHttp();
 
 // Em dev, o hot reload recria módulos; sem o cache global você
 // acumula um PrismaClient novo a cada save.
 if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prisma = db;
+  globalForPrisma.prismaHttp = dbHttp;
 }

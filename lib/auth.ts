@@ -7,7 +7,7 @@ import type { NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { db } from "./db";
+import { dbHttp } from "./db";
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
@@ -22,7 +22,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.senha) return null;
 
-        const usuario = await db.usuario.findUnique({
+        const usuario = await dbHttp.usuario.findUnique({
           where: { email: credentials.email.toLowerCase().trim() },
         });
 

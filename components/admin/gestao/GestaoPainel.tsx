@@ -43,13 +43,30 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
   const [periodo, setPeriodo] = useState("");
   const carregar = useCallback(async () => {
     setCarregando(true);
-    try {
-      const r = await fetch("/api/admin/gestao", { cache: "no-store" });
-      const d = await r.json();
-      if (!r.ok) throw new Error(d.erro ?? "Erro ao carregar dados.");
-      setDados(d); setErro("");
-    } catch (e) { setErro(e instanceof Error ? e.message : "Erro de conexão."); }
-    finally { setCarregando(false); }
+    setErro("");
+    for (let tentativa = 1; tentativa <= 2; tentativa++) {
+      try {
+        const r = await fetch("/api/admin/gestao", { cache: "no-store" });
+        const d = await r.json();
+        if (!r.ok) {
+          const falha = new Error(d.erro ?? "Erro ao carregar dados.");
+          // 5xx pode ser o banco acordando; tenta mais uma vez.
+          if (r.status < 500) throw Object.assign(falha, { semRepetir: true });
+          throw falha;
+        }
+        setDados(d);
+        setCarregando(false);
+        return;
+      } catch (e) {
+        const semRepetir = (e as { semRepetir?: boolean }).semRepetir === true;
+        if (semRepetir || tentativa === 2) {
+          setErro(e instanceof Error ? e.message : "Erro de conexão.");
+          setCarregando(false);
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 800));
+      }
+    }
   }, []);
   useEffect(() => { void carregar(); }, [carregar]);
   useEffect(() => {
