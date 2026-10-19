@@ -11,7 +11,7 @@ type Produto = { id: string; nome: string; preco: string | null; fichaTecnica: I
 type Producao = { id: string; nomeProduto: string; quantidade: number; criadaEm: string };
 type Venda = { id: string; nomeProduto: string; quantidade: number; total: string; criadaEm: string; cliente: string | null };
 type Despesa = { id: string; descricao: string; categoria: string; valor: string; criadaEm: string };
-type Dados = { materias: Materia[]; produtos: Produto[]; producoes: Producao[]; vendas: Venda[]; despesas: Despesa[] };
+type Dados = { schemaPendente?: boolean; materias: Materia[]; produtos: Produto[]; producoes: Producao[]; vendas: Venda[]; despesas: Despesa[] };
 type Aba = "estoque" | "producao" | "financeiro" | "relatorios";
 const moeda = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const numero = (v: string | number) => Number(v);
@@ -56,6 +56,7 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
     setFicha(p?.fichaTecnica.map(x => ({ materiaPrimaId: x.materiaPrimaId, quantidade: x.quantidade })) ?? []);
   }, [produtoId, dados]);
   async function executar(acao: string, payload?: unknown, id?: string) {
+    if (dados?.schemaPendente) { toast.error("As tabelas da gestão ainda precisam ser criadas no banco."); return false; }
     setSalvando(true);
     try {
       const r = await fetch("/api/admin/gestao", {
@@ -82,6 +83,7 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
   const editarMateria = (m: Materia) => setMateria({ id: m.id, nome: m.nome, quantidade: m.quantidade, unidade: m.unidade });
   const renomear = (s: string) => s === "materiais" ? "Materiais" : s === "marketing" ? "Marketing" : s === "equipamentos" ? "Equipamentos" : "Outros";
   return <div className="space-y-6">
+    {dados.schemaPendente && <div role="status" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">Prévia do painel: as novas tabelas ainda precisam ser criadas no PostgreSQL com <code>npm run db:deploy</code>. Os lançamentos estão desabilitados até a migração. Nenhum dado do Firebase será importado.</div>}
     <header className="flex flex-wrap items-center justify-between gap-3"><div><h1 className="font-serif text-2xl">{({ estoque: "Estoque", producao: "Produção", financeiro: "Financeiro", relatorios: "Relatórios" } as const)[aba]}</h1><p className="text-sm text-muted-foreground">Gestão interna do Refúgio das Flores</p></div><Button variant="outline" disabled={carregando} onClick={() => void carregar()}>{carregando ? "Atualizando..." : "Atualizar dados"}</Button></header>
     {aba === "estoque" && <>
       <Secao titulo={materia.id ? "Editar matéria-prima" : "Adicionar matéria-prima"}>
