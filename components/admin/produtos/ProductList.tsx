@@ -1,3 +1,8 @@
+"use client";
+
+import { useAdminSearch } from "@/components/admin/layout/AdminSearchContext";
+import { correspondeBusca } from "@/lib/admin/busca";
+import { AdminSearchEmptyState } from "@/components/admin/layout/AdminSearchEmptyState";
 import {
   Table,
   TableBody,
@@ -10,10 +15,14 @@ import { ProductDesktopRow } from "./ProductDesktopRow";
 import { ProductMobileCard } from "./ProductMobileCard";
 
 export function ProductList({ products }: { products: AdminProductListItem[] }) {
+  const { query } = useAdminSearch();
+  const filtrados = products.filter((produto) => correspondeBusca(query, produto.nome, produto.categoria.nome, produto.ativo ? "ativo" : "inativo", produto.sobConsulta ? "sob consulta" : produto.preco == null ? "" : Number(produto.preco).toFixed(2)));
+  if (filtrados.length === 0) return <AdminSearchEmptyState query={query} />;
+
   return (
     <>
       <div className="grid gap-3 md:hidden">
-        {products.map((product) => (
+        {filtrados.map((product) => (
           <ProductMobileCard key={product.id} product={product} />
         ))}
       </div>
@@ -31,7 +40,7 @@ export function ProductList({ products }: { products: AdminProductListItem[] }) 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {filtrados.map((product) => (
               <ProductDesktopRow key={product.id} product={product} />
             ))}
           </TableBody>
