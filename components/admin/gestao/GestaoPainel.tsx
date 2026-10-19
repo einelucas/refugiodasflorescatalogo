@@ -4,7 +4,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { useAdminSearch } from "@/components/admin/layout/AdminSearchContext";
+import { correspondeBusca } from "@/lib/admin/busca";
 type Materia = { id: string; nome: string; quantidade: string; unidade: string };
 type ItemFicha = { materiaPrimaId: string; quantidade: string };
 type Produto = { id: string; nome: string; preco: string | null; fichaTecnica: ItemFicha[] };
@@ -28,12 +29,12 @@ function SeletorProduto({ produtos, value, onChange }: { produtos: Produto[]; va
   </select>;
 }
 export function GestaoPainel({ aba }: { aba: Aba }) {
+  const { query } = useAdminSearch();
   const [dados, setDados] = useState<Dados | null>(null);
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
   const [materia, setMateria] = useState({ id: "", nome: "", quantidade: "", unidade: "un" });
-  const [busca, setBusca] = useState("");
   const [produtoId, setProdutoId] = useState("");
   const [ficha, setFicha] = useState<{ materiaPrimaId: string; quantidade: string }[]>([]);
   const [qtd, setQtd] = useState("1");
@@ -74,12 +75,13 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
   const produto = dados?.produtos.find(p => p.id === produtoId);
   const receita = (dados?.vendas ?? []).reduce((s, v) => s + numero(v.total), 0);
   const despesasTotal = (dados?.despesas ?? []).reduce((s, v) => s + numero(v.valor), 0);
-  const vendasPeriodo = useMemo(() => (dados?.vendas ?? []).filter(v => !periodo || v.criadaEm.slice(0, 7) === periodo), [dados, periodo]);
-  const despesasPeriodo = useMemo(() => (dados?.despesas ?? []).filter(d => !periodo || d.criadaEm.slice(0, 7) === periodo), [dados, periodo]);
+  const vendasPeriodo = useMemo(() => (dados?.vendas ?? []).filter(v => (!periodo || v.criadaEm.slice(0, 7) === periodo) && correspondeBusca(query, v.nomeProduto, v.cliente, v.total)), [dados, periodo, query]);
+  const despesasPeriodo = useMemo(() => (dados?.despesas ?? []).filter(d => (!periodo || d.criadaEm.slice(0, 7) === periodo) && correspondeBusca(query, d.descricao, d.categoria, d.valor)), [dados, periodo, query]);
   if (carregando && !dados) return <p role="status" className="py-12 text-center text-muted-foreground">Carregando gestão interna...</p>;
   if (erro) return <div role="alert" className="space-y-3"><p>{erro}</p><Button onClick={() => void carregar()}>Tentar novamente</Button></div>;
   if (!dados) return null;
-  const selecionados = dados.materias.filter(m => m.nome.toLowerCase().includes(busca.toLowerCase()));
+  const selecionados = dados.materias.filter(m => correspondeBusca(query, m.nome, m.unidade));
+  const producoesFiltradas = dados.producoes.filter(p => correspondeBusca(query, p.nomeProduto, p.quantidade, p.criadaEm));
   const editarMateria = (m: Materia) => setMateria({ id: m.id, nome: m.nome, quantidade: m.quantidade, unidade: m.unidade });
   const renomear = (s: string) => s === "materiais" ? "Materiais" : s === "marketing" ? "Marketing" : s === "equipamentos" ? "Equipamentos" : "Outros";
   return <div className="space-y-6">
@@ -94,7 +96,7 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
           <div className="flex items-end gap-2"><Button disabled={salvando} type="submit">{salvando ? "Salvando..." : materia.id ? "Atualizar" : "Adicionar"}</Button>{materia.id && <Button type="button" variant="outline" onClick={() => setMateria({ id: "", nome: "", quantidade: "", unidade: "un" })}>Cancelar</Button>}</div>
         </form>
       </Secao>
-      <Secao titulo="Matérias-primas cadastradas"><Input aria-label="Buscar matéria-prima" placeholder="Buscar matéria-prima..." value={busca} onChange={e => setBusca(e.target.value)}/><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Nome</th><th>Disponível</th><th className="text-right">Ações</th></tr></thead><tbody>{selecionados.map(m => <tr key={m.id} className="border-b"><td className="p-2">{m.nome}</td><td>{m.quantidade} {m.unidade}</td><td className="space-x-2 py-2 text-right"><Button size="sm" variant="outline" onClick={() => editarMateria(m)}>Editar</Button><Button size="sm" variant="outline" disabled={salvando} onClick={async () => { if (confirm("Excluir matéria-prima?")) await executar("estoque.excluir", undefined, m.id); }}>Excluir</Button></td></tr>)}</tbody></table>{selecionados.length === 0 && <p className="py-4 text-sm text-muted-foreground">Nenhum item encontrado.</p>}</div></Secao>
+      <Secao titulo="Matérias-primas cadastradas"><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="p-2">Nome</th><th>Disponível</th><th className="text-right">Ações</th></tr></thead><tbody>{selecionados.map(m => <tr key={m.id} className="border-b"><td className="p-2">{m.nome}</td><td>{m.quantidade} {m.unidade}</td><td className="space-x-2 py-2 text-right"><Button size="sm" variant="outline" onClick={() => editarMateria(m)}>Editar</Button><Button size="sm" variant="outline" disabled={salvando} onClick={async () => { if (confirm("Excluir matéria-prima?")) await executar("estoque.excluir", undefined, m.id); }}>Excluir</Button></td></tr>)}</tbody></table>{selecionados.length === 0 && <p className="py-4 text-sm text-muted-foreground">Nenhum item encontrado.</p>}</div></Secao>
     </>}
     {aba === "producao" && <>
       <Secao titulo="Ficha técnica do produto"><Campo rotulo="Produto"><SeletorProduto produtos={dados.produtos} value={produtoId} onChange={setProdutoId}/></Campo>
@@ -106,7 +108,7 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
         </div>}
       </Secao>
       <Secao titulo="Registrar produção"><form className="grid gap-3 sm:grid-cols-[1fr_120px_auto] sm:items-end" onSubmit={async e => { e.preventDefault(); if (await executar("producao.registrar", { produtoId, quantidade: numero(qtd) })) setQtd("1"); }}><Campo rotulo="Produto"><SeletorProduto produtos={dados.produtos} value={produtoId} onChange={setProdutoId}/></Campo><Campo rotulo="Quantidade"><Input required type="number" min="1" step="1" value={qtd} onChange={e => setQtd(e.target.value)}/></Campo><Button type="submit" disabled={salvando || !produtoId}>{salvando ? "Produzindo..." : "Produzir"}</Button></form><p className="text-xs text-muted-foreground">A produção baixa os ingredientes do estoque de forma atômica. A venda não baixa novamente.</p></Secao>
-      <Secao titulo="Produções recentes">{dados.producoes.length ? <div className="space-y-2">{dados.producoes.map(p => <p className="border-b py-2 text-sm" key={p.id}>{dataBR(p.criadaEm)} — {p.quantidade} × {p.nomeProduto}</p>)}</div> : <p className="text-sm text-muted-foreground">Nenhuma produção registrada.</p>}</Secao>
+      <Secao titulo="Produções recentes">{producoesFiltradas.length ? <div className="space-y-2">{producoesFiltradas.map(p => <p className="border-b py-2 text-sm" key={p.id}>{dataBR(p.criadaEm)} — {p.quantidade} × {p.nomeProduto}</p>)}</div> : <p className="text-sm text-muted-foreground">{query ? "Nenhuma produção corresponde à busca." : "Nenhuma produção registrada."}</p>}</Secao>
     </>}
     {aba === "financeiro" && <>
       <div className="grid gap-4 sm:grid-cols-3">{[["Receita total", receita], ["Despesas totais", despesasTotal], ["Saldo (receita − despesas)", receita - despesasTotal]].map(([label, value]) => <Card key={label}><CardContent className="pt-5"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold">{moeda(Number(value))}</p></CardContent></Card>)}</div>
@@ -114,7 +116,7 @@ export function GestaoPainel({ aba }: { aba: Aba }) {
       <Secao titulo="Registrar venda"><form className="space-y-3" onSubmit={async e => { e.preventDefault(); if (await executar("venda.registrar", { produtoId, quantidade: numero(qtd), cliente })) { setCliente(""); setQtd("1"); } }}><Campo rotulo="Produto"><SeletorProduto produtos={dados.produtos} value={produtoId} onChange={setProdutoId}/></Campo><Campo rotulo="Quantidade"><Input required min="1" step="1" type="number" value={qtd} onChange={e => setQtd(e.target.value)}/></Campo><Campo rotulo="Cliente (opcional)"><Input value={cliente} onChange={e => setCliente(e.target.value)}/></Campo>{produto && <p className="text-sm">Total: {moeda(numero(produto.preco || 0) * numero(qtd || 0))}</p>}<Button disabled={salvando || !produtoId || produto?.preco == null}>Registrar venda</Button></form></Secao>
       <Secao titulo="Registrar despesa"><form className="space-y-3" onSubmit={async e => { e.preventDefault(); if (await executar("despesa.registrar", { descricao: despesa.descricao, valor: numero(despesa.valor), categoria: despesa.categoria })) setDespesa({ descricao: "", valor: "", categoria: "materiais" }); }}><Campo rotulo="Descrição"><Input required value={despesa.descricao} onChange={e => setDespesa({ ...despesa, descricao: e.target.value })}/></Campo><Campo rotulo="Valor (R$)"><Input required type="number" min="0.01" step="0.01" value={despesa.valor} onChange={e => setDespesa({ ...despesa, valor: e.target.value })}/></Campo><Campo rotulo="Categoria"><select className="h-9 w-full rounded-md border bg-background px-3" value={despesa.categoria} onChange={e => setDespesa({ ...despesa, categoria: e.target.value })}>{["materiais", "marketing", "equipamentos", "outros"].map(c => <option key={c} value={c}>{renomear(c)}</option>)}</select></Campo><Button disabled={salvando}>Registrar despesa</Button></form></Secao>
       </div>
-      <Secao titulo="Últimas transações"><div className="space-y-2">{[...dados.vendas.map(v => ({ id: v.id, data: v.criadaEm, nome: v.quantidade + " × " + v.nomeProduto, valor: numero(v.total) })), ...dados.despesas.map(d => ({ id: d.id, data: d.criadaEm, nome: d.descricao, valor: -numero(d.valor) }))].sort((a,b) => b.data.localeCompare(a.data)).slice(0,20).map(t => <div key={t.id} className="flex justify-between gap-3 border-b py-2 text-sm"><span>{dataBR(t.data)} — {t.nome}</span><span className="whitespace-nowrap font-semibold">{moeda(t.valor)}</span></div>)}</div></Secao>
+      <Secao titulo="Últimas transações"><div className="space-y-2">{[...dados.vendas.map(v => ({ id: v.id, data: v.criadaEm, nome: v.quantidade + " × " + v.nomeProduto, valor: numero(v.total) })), ...dados.despesas.map(d => ({ id: d.id, data: d.criadaEm, nome: d.descricao, valor: -numero(d.valor) }))].filter(t => correspondeBusca(query, t.nome, t.valor, t.data)).sort((a,b) => b.data.localeCompare(a.data)).slice(0,20).map(t => <div key={t.id} className="flex justify-between gap-3 border-b py-2 text-sm"><span>{dataBR(t.data)} — {t.nome}</span><span className="whitespace-nowrap font-semibold">{moeda(t.valor)}</span></div>)}</div></Secao>
     </>}
     {aba === "relatorios" && <>
       <Secao titulo="Período"><Campo rotulo="Mês (vazio para todos os lançamentos carregados)"><Input type="month" value={periodo} onChange={e => setPeriodo(e.target.value)}/></Campo><p className="text-xs text-muted-foreground">Relatórios exibem até os 1.000 lançamentos mais recentes por tipo. Para relatórios históricos completos, a consulta paginada deve ser implementada.</p></Secao>
