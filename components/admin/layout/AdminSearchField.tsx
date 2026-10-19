@@ -3,14 +3,14 @@
 import { Search, X } from "lucide-react";
 import { useAdminSearch } from "./AdminSearchContext";
 
-export function AdminSearchField({ label }: { label: string }) {
+export function AdminSearchField({ label, id }: { label: string; id: string }) {
   const { query, setQuery } = useAdminSearch();
   return (
     <div role="search" className="relative w-full">
-      <label htmlFor="admin-search" className="sr-only">Buscar em {label}</label>
+      <label htmlFor={id} className="sr-only">Buscar em {label}</label>
       <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-[17px] w-[17px] -translate-y-1/2 text-muted-foreground" />
       <input
-        id="admin-search"
+        id={id}
         type="search"
         autoComplete="off"
         value={query}
