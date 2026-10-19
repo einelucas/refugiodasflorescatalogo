@@ -1,44 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { AdminDesktopHeader } from "@/components/admin/layout/AdminDesktopHeader";
-import { AdminMobileHeader } from "@/components/admin/layout/AdminMobileHeader";
-import { AdminMobileMenu } from "@/components/admin/layout/AdminMobileMenu";
+import { AdminHeader } from "@/components/admin/layout/AdminHeader";
+import { AdminTabsNav } from "@/components/admin/layout/AdminTabsNav";
+import { AdminSearchProvider } from "@/components/admin/layout/AdminSearchContext";
 
+// Layout compartilhado por todas as rotas /admin, exceto login.
+// O key reinicia a pesquisa a cada troca de página e evita filtros residuais.
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [menuAberto, setMenuAberto] = useState(false);
 
-  useEffect(() => {
-    setMenuAberto(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!menuAberto) return;
-
-    const overflowAnterior = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = overflowAnterior;
-    };
-  }, [menuAberto]);
-
-  if (pathname === "/admin/login") {
-    return <>{children}</>;
-  }
+  if (pathname === "/admin/login") return <>{children}</>;
 
   return (
-    <div className="admin-shell min-h-dvh min-w-0 bg-muted/30">
-      <AdminMobileHeader menuAberto={menuAberto} onAbrirMenu={() => setMenuAberto(true)} />
-      <AdminDesktopHeader pathname={pathname} />
-
-      {menuAberto && <AdminMobileMenu pathname={pathname} onFechar={() => setMenuAberto(false)} />}
-
-      <main className="admin-content mx-auto w-full min-w-0 max-w-7xl px-3 py-5 sm:px-4 sm:py-6 lg:px-6 lg:py-8">
-        {children}
-      </main>
-    </div>
+    <AdminSearchProvider key={pathname}>
+      <div className="admin-shell min-h-dvh min-w-0 bg-[#fbf8fb]">
+        <AdminHeader pathname={pathname} />
+        <AdminTabsNav pathname={pathname} />
+        <main className="admin-content mx-auto w-full min-w-0 max-w-[1360px] px-3 pb-10 pt-6 sm:px-5 lg:px-7 lg:pt-8">
+          {children}
+        </main>
+      </div>
+    </AdminSearchProvider>
   );
 }

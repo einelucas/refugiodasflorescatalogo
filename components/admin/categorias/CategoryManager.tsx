@@ -1,6 +1,9 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { useAdminSearch } from "@/components/admin/layout/AdminSearchContext";
+import { correspondeBusca } from "@/lib/admin/busca";
+import { AdminSearchEmptyState } from "@/components/admin/layout/AdminSearchEmptyState";
 import { Button } from "@/components/ui/button";
 import { useCategoryManager } from "@/hooks/admin/useCategoryManager";
 import type { CategoriaAdmin } from "@/types";
@@ -9,6 +12,8 @@ import { CategoryTable } from "./CategoryTable";
 
 export function CategoryManager({ categories }: { categories: CategoriaAdmin[] }) {
   const manager = useCategoryManager();
+  const { query } = useAdminSearch();
+  const filtradas = categories.filter((categoria) => correspondeBusca(query, categoria.nome, categoria.titulo, categoria.slug, categoria.subtitulo, ...categoria.aliases));
 
   return (
     <>
@@ -18,11 +23,11 @@ export function CategoryManager({ categories }: { categories: CategoriaAdmin[] }
           Nova categoria
         </Button>
       </div>
-      <CategoryTable
-        categories={categories}
+      {filtradas.length ? <CategoryTable
+        categories={filtradas}
         onEdit={manager.openEdit}
         onDeactivate={(category) => void manager.deactivate(category)}
-      />
+      /> : <AdminSearchEmptyState query={query} />}
       <CategoryFormDialog manager={manager} />
     </>
   );
