@@ -14,6 +14,7 @@ function falha(erro: unknown) {
     if (erro.code === "P2002") return Response.json({ erro: "Já existe um item com esse nome." }, { status: 409 });
     if (erro.code === "P2003" || erro.code === "P2014") return Response.json({ erro: "Item vinculado a outros registros." }, { status: 409 });
     if (erro.code === "P2025") return Response.json({ erro: "Registro não encontrado." }, { status: 404 });
+    if (erro.code === "P2021") return Response.json({ erro: "As tabelas da gestão ainda não foram criadas. Execute npm run db:deploy no ambiente do banco." }, { status: 503 });
   }
   console.error("[gestao] erro:", erro);
   return Response.json({ erro: "Não foi possível concluir a operação." }, { status: 500 });
@@ -33,7 +34,21 @@ export async function GET() {
     return Response.json(serializar({ materias, produtos, producoes, vendas, despesas }), {
       headers: { "Cache-Control": "private, no-store" },
     });
-  } catch (erro) { return falha(erro); }
+  } catch (erro) {
+    // Permite visualizar o layout antes da aplicação da migração em produção.
+    // Nenhum lançamento é simulado nem gravado se as tabelas ainda não existem.
+    if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2021") {
+      try {
+        const lista = await db.produto.findMany({ orderBy: { nome: "asc" }, select: { id: true, nome: true, preco: true } });
+        return Response.json({
+          schemaPendente: true, materias: [],
+          produtos: lista.map(p => ({ ...p, fichaTecnica: [] })),
+          producoes: [], vendas: [], despesas: [],
+        }, { headers: { "Cache-Control": "private, no-store" } });
+      } catch (erroCatalogo) { return falha(erroCatalogo); }
+    }
+    return falha(erro);
+  }
 }
 export async function POST(request: Request) {
   if (!await exigirAdmin()) return Response.json({ erro: "Não autorizado." }, { status: 401 });
