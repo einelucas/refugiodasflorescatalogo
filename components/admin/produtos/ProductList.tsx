@@ -21,7 +21,7 @@ export function ProductList({ products }: { products: AdminProductListItem[] }) 
 
   return (
     <>
-      <div className="grid gap-3 md:hidden">
+      <div className="grid grid-cols-1 gap-3 md:hidden">
         {filtrados.map((product) => (
           <ProductMobileCard key={product.id} product={product} />
         ))}

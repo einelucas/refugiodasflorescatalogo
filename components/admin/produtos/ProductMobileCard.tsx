@@ -11,7 +11,7 @@ import { ProductThumbnail } from "./ProductThumbnail";
 
 export function ProductMobileCard({ product }: { product: AdminProductListItem }) {
   return (
-    <article className="rounded-lg border bg-background p-3 shadow-sm">
+    <article className="min-w-0 overflow-hidden rounded-lg border bg-background p-3 shadow-sm">
       <div className="flex min-w-0 gap-3">
         <ProductThumbnail url={productThumbnailUrl(product)} />
         <div className="min-w-0 flex-1">
