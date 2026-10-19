@@ -35,7 +35,7 @@ export function AdminHeader({ pathname }: { pathname: string }) {
         </div>
 
         <div className="mx-auto hidden w-full max-w-[430px] min-w-[180px] flex-1 md:block">
-          {podeBuscar && <AdminSearchField label={aba?.rotulo ?? "esta aba"} />}
+          {podeBuscar && <AdminSearchField id="admin-search-desktop" label={aba?.rotulo ?? "esta aba"} />}
         </div>
 
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
@@ -55,7 +55,7 @@ export function AdminHeader({ pathname }: { pathname: string }) {
 
       {podeBuscar && (
         <div className="border-t border-primary/5 px-3 pb-3 pt-2 md:hidden sm:px-5">
-          <AdminSearchField label={aba?.rotulo ?? "esta aba"} />
+          <AdminSearchField id="admin-search-mobile" label={aba?.rotulo ?? "esta aba"} />
         </div>
       )}
     </header>
