@@ -12,6 +12,10 @@ test("links do painel na ordem esperada e com página existente", () => {
       ["/admin/categorias", "Categorias"],
       ["/admin/paginas", "Páginas"],
       ["/admin/embalagens", "Embalagens"],
+      ["/admin/estoque", "Estoque"],
+      ["/admin/producao", "Produção"],
+      ["/admin/financeiro", "Financeiro"],
+      ["/admin/relatorios", "Relatórios"],
     ],
   );
   for (const { href } of NAV_ADMIN) {
