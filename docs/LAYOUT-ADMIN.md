@@ -6,7 +6,8 @@ Inspirado nas proporções e composição de `frontend/components/AppHeader.vue`
 ## Componentização
 - `AdminShell`: compõe o layout comum a todas as rotas privadas.
 - `AdminHeader`: marca Refúgio, contexto da aba, botão **Ver catálogo**, botão **Sair** e pesquisa.
-- `AdminTabsNav` + `AdminTabsNavItem`: barra arredondada com navegação por ícones, estado ativo, nome acessível e dica de ferramenta nativa ao passar o mouse.
+- `AdminTabsNav` + `AdminTabsNavItem`: barra arredondada com navegação por ícones, estado ativo, nome acessível e balão com o nome da aba ao passar o mouse ou focar pelo teclado. Visível a partir de `md`.
+- `AdminMobileSidebar`: abaixo de `md`, substitui a barra de abas por uma sidebar aberta pelo botão de menu do header; fecha pelo fundo, pelo X, pelo `Esc` ou ao escolher uma aba.
 - `AdminSearchProvider`, `AdminSearchField`, `AdminSearchEmptyState`: estado e interface de pesquisa única; limpo ao trocar de rota.
 - `NAV_ADMIN`: fonte única de navegação já utilizada pelas novas abas.
 

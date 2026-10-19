@@ -27,6 +27,21 @@ test("o header possui marca, busca contextual, catálogo e logout", () => {
   assert.match(header, /podeBuscar/);
 });
 
+test("no mobile a barra de abas é substituída pela sidebar", () => {
+  const shell = arquivo("components/admin/AdminShell.tsx");
+  const tabs = arquivo("components/admin/layout/AdminTabsNav.tsx");
+  const sidebar = arquivo("components/admin/layout/AdminMobileSidebar.tsx");
+  const header = arquivo("components/admin/layout/AdminHeader.tsx");
+
+  assert.match(shell, /<AdminMobileSidebar/);
+  assert.match(header, /onAbrirMenu/);
+  assert.match(header, /aria-controls=\{ID_MENU_MOBILE\}/);
+  assert.match(header, /md:hidden/);
+  assert.match(tabs, /hidden[^"]*md:block/);
+  assert.match(sidebar, /md:hidden/);
+  assert.match(sidebar, /NAV_ADMIN\.map/);
+});
+
 test("a busca é usada nas listas das abas administrativas", () => {
   [
     "components/admin/produtos/ProductList.tsx",

@@ -1,14 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Menu } from "lucide-react";
 import { SairButton } from "@/components/admin/SairButton";
 import { AdminAccentBar, AdminLogo } from "./AdminBrand";
+import { ID_MENU_MOBILE } from "./AdminMobileSidebar";
 import { AdminSearchField } from "./AdminSearchField";
 import { NAV_ADMIN, URL_CATALOGO, itemAtivo } from "./navegacao";
 
+type AdminHeaderProps = {
+  pathname: string;
+  menuAberto: boolean;
+  onAbrirMenu: () => void;
+};
+
 // Mesmas proporções e hierarquia do AppHeader da Central, com a identidade do Refúgio.
-export function AdminHeader({ pathname }: { pathname: string }) {
+export function AdminHeader({ pathname, menuAberto, onAbrirMenu }: AdminHeaderProps) {
   const aba = NAV_ADMIN.find((item) => itemAtivo(pathname, item.href));
   // Formulários (ex.: novo produto) não exibem uma pesquisa sem resultados.
   const podeBuscar = NAV_ADMIN.some((item) => item.href === pathname);
@@ -16,7 +23,18 @@ export function AdminHeader({ pathname }: { pathname: string }) {
   return (
     <header className="relative z-20 border-b border-primary/10 bg-background/95 backdrop-blur" aria-label="Cabeçalho administrativo">
       <AdminAccentBar />
-      <div className="mx-auto flex min-h-[64px] w-full max-w-[1440px] items-center gap-3 px-3 sm:px-5 lg:gap-5 lg:px-7">
+      <div className="mx-auto flex min-h-[64px] w-full max-w-[1440px] items-center gap-3 px-4 sm:px-5 lg:gap-5 lg:px-7">
+        <button
+          type="button"
+          onClick={onAbrirMenu}
+          aria-label="Abrir menu do painel"
+          aria-expanded={menuAberto}
+          aria-controls={ID_MENU_MOBILE}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/10 bg-white text-foreground transition-colors hover:bg-primary/5 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 md:hidden"
+        >
+          <Menu aria-hidden="true" className="h-5 w-5" />
+        </button>
+
         <Link
           href="/admin/produtos"
           aria-label="Ir para o painel do Refúgio das Flores"
@@ -54,7 +72,7 @@ export function AdminHeader({ pathname }: { pathname: string }) {
       </div>
 
       {podeBuscar && (
-        <div className="border-t border-primary/5 px-3 pb-3 pt-2 md:hidden sm:px-5">
+        <div className="border-t border-primary/5 px-4 pb-3 pt-2 md:hidden sm:px-5">
           <AdminSearchField id="admin-search-mobile" label={aba?.rotulo ?? "esta aba"} />
         </div>
       )}
