@@ -8,6 +8,7 @@ import { GestaoErro, excluirMateriaPrima, registrarDespesa, registrarProducao, r
 export const dynamic = "force-dynamic";
 const idSchema = z.string().uuid();
 function falha(erro: unknown) {
+  if (erro instanceof SyntaxError) return Response.json({ erro: "JSON inválido." }, { status: 400 });
   if (erro instanceof ZodError) return Response.json({ erro: erro.issues[0]?.message ?? "Dados inválidos." }, { status: 400 });
   if (erro instanceof GestaoErro) return Response.json({ erro: erro.message }, { status: erro.status });
   if (erro instanceof Prisma.PrismaClientKnownRequestError) {
@@ -53,8 +54,11 @@ export async function GET() {
 export async function POST(request: Request) {
   if (!await exigirAdmin()) return Response.json({ erro: "Não autorizado." }, { status: 401 });
   try {
-    const dados = await request.json();
-    if (typeof dados !== "object" || dados === null) throw new GestaoErro("Dados inválidos.");
+    const entrada: unknown = await request.json();
+    if (typeof entrada !== "object" || entrada === null || Array.isArray(entrada)) {
+      throw new GestaoErro("Dados inválidos.");
+    }
+    const dados = entrada as { acao?: unknown; payload?: unknown; id?: unknown };
     const { acao, payload } = dados;
     let result: unknown;
     switch (acao) {
