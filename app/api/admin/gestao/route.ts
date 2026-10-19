@@ -52,6 +52,6 @@ export async function POST(request: Request) {
       case "despesa.registrar": result = await registrarDespesa(payload); break;
       default: throw new GestaoErro("Operação desconhecida.");
     }
-    return Response.json({ ok: true, resultado: serializar(result) }, { headers: { "Cache-Control": "private, no-store" } });
+    return Response.json({ ok: true, resultado: result == null ? null : serializar(result as Record<string, unknown>) }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (erro) { return falha(erro); }
 }
