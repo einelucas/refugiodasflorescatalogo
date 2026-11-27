@@ -21,14 +21,8 @@ html[data-refugio-intro="pending"]::before {
   background:radial-gradient(ellipse at 50% 40%,#684675 0%,#5a1e72 74%);
   pointer-events:auto;
 }
-html[data-refugio-intro="pending"]::after {
-  content:"";position:fixed;z-index:2147483647;left:50%;top:calc(50% - 44px);
-  width:min(192px,45.6vw,26.4svh);height:min(8px,1.9vw,1.1svh);border-radius:999px;transform:translate(-50%,-50%);
-  background:linear-gradient(180deg,#f8eefb,#e1cce9 48%,#b49bc2);
-  box-shadow:0 0 3px #f8eefb99;pointer-events:none;
-}
 @media(prefers-reduced-motion:reduce){
   html[data-refugio-intro]{overflow:visible;background:initial;}
-  html[data-refugio-intro]::before,html[data-refugio-intro]::after{display:none;}
+  html[data-refugio-intro]::before{display:none;}
 }
 `;
