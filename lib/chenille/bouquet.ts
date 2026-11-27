@@ -67,10 +67,11 @@ export function createBouquetArt(dpr:number){
     ctx.drawImage(image,-X,-Y,W,H);ctx.restore();
   }
   return {
-    back(ctx:CanvasRenderingContext2D,p:number){
+    back(ctx:CanvasRenderingContext2D,p:number,drawCompanions?:()=>boolean){
       // The printed pages open behind the flower bundle. The handle joins below it.
       rear.forEach((image,i)=>show(ctx,image,stageProgress(p,.38+i*.035,.69+i*.045),(i-1.5)*24,72,(i-1.5)*.12,.98,110));
       show(ctx,handle,stageProgress(p,.45,.73),0,42,0,.97,110);
+      if(drawCompanions?.())return;
       show(ctx,foliage,stageProgress(p,0,.34),0,38,0,.8);
       tulips.forEach((image,i)=>show(ctx,image,stageProgress(p,.07+i*.045,.37+i*.06),(i-1)*22,42,(i-1)*.12,.85));
       show(ctx,buds,stageProgress(p,.29,.52),0,15,0,.86);
