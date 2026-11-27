@@ -42,3 +42,8 @@
   .public-site .chenille-steps li {transition:none;}
   .public-site .hero-banner-inner {animation:none;opacity:1;}
 }
+
+.public-site .chenille-story[data-entered="true"] .chenille-story-copy {animation:fadeUp .55s ease-out both;}
+@media(prefers-reduced-motion:reduce){
+  .public-site .chenille-story[data-entered="true"] .chenille-story-copy {animation:none;}
+}

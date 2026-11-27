@@ -17,10 +17,10 @@ function setup(canvas:HTMLCanvasElement){
   return {draw({ctx,width,height,dpr,dt,reduced}:import("@/hooks/site/useCanvasAnimation").CanvasFrame){
     if(spriteDpr!==dpr){sprites=flowers.map(f=>flowerSprite(createFlower(f.kind),dpr));spriteDpr=dpr;}
     if(reduced){time=0;wind=0;}else{time+=dt;wind+=(targetWind-wind)*Math.min(1,dt*2);}
-    const count=width<480?2:width<768?4:6;
+    const count=width<480?3:width<768?4:6;
     for(let i=0;i<count;i++){
       const f=flowers[i],size=f.size*(width<480?.8:1);
-      const side=f.x<.5?-1:1, x=f.x*width+Math.sin(time*f.speed*.025+f.phase)*Math.min(width*.06,45)+wind;
+      const side=f.x<.5?-1:1, x=f.x*width+Math.sin(time*f.speed*.055+f.phase)*Math.min(width*.07,65)+wind;
       const y=f.y*height+Math.sin(time*.65+f.phase)*8;
       ctx.save();ctx.translate(x,y);ctx.rotate(f.rotation+Math.sin(time*.45+f.phase)*.14*side);ctx.globalAlpha=width<480?.52:.76;
       ctx.drawImage(sprites[i],-size/2,-size/2,size,size);ctx.restore();

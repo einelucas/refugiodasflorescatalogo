@@ -34,7 +34,7 @@ export function useCanvasAnimation(ref:RefObject<HTMLCanvasElement|null>,setup:S
     const resize=()=>{dirty=true;request();};
     const visibility=()=>{if(document.hidden)cancel();else request();};
     const change=()=>{cancel();request();};
-    const onScroll=()=>request();
+    const onScroll=()=>{if(!media.matches)request();};
     const io=new IntersectionObserver(([entry])=>{visible=entry.isIntersecting;if(visible)request();else cancel();});
     io.observe(target);
     const ro=new ResizeObserver(resize);ro.observe(canvas);

@@ -13,8 +13,7 @@ export function createFlower(kind:FlowerKind):Flower {
   switch(kind){
     case "rosa": ring(5,38,17,PALETTE.mid,-1.2,4);ring(4,25,12,PALETTE.soft,.3,3);ring(3,14,7,PALETTE.lavender,.7);centerColor=PALETTE.rose;centerSize=5;break;
     case "girassol": ring(13,41,8,PALETTE.gold,-Math.PI/2);centerColor=PALETTE.deep;centerSize=13;break;
-    case "tulipa": ring(3,40,13,PALETTE.soft,-Math.PI*.84); // replace radial set with upright cup
-      petals.length=0;
+    case "tulipa": // Upright cup.
       for(const [a,l,w] of [[-2.16,41,13],[-1.02,41,13],[-Math.PI/2,47,14]]) petals.push(thread(petal(0,-16,a,l,w),PALETTE.soft,6));
       centerColor=PALETTE.lavender;centerSize=4;break;
     case "lirio": ring(6,45,13,PALETTE.rose,-Math.PI/2,5);centerColor=PALETTE.mid;break;

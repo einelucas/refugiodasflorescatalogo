@@ -1,5 +1,5 @@
 "use client";
-import { useCallback,useRef } from "react";
+import { useCallback,useEffect,useRef } from "react";
 import { useCanvasAnimation,type CanvasFrame } from "@/hooks/site/useCanvasAnimation";
 import { createFlower } from "@/lib/chenille/flowers";
 import { drawThread,prepareThread } from "@/lib/chenille/engine";
@@ -15,6 +15,13 @@ const steps=[
 
 export function ThreadToFlower(){
   const section=useRef<HTMLElement>(null),canvas=useRef<HTMLCanvasElement>(null);
+  useEffect(()=>{
+    const el=section.current;if(!el)return;
+    const observer=new IntersectionObserver(([entry])=>{
+      if(entry.isIntersecting){el.dataset.entered="true";observer.disconnect();}
+    },{threshold:.12});
+    observer.observe(el);return ()=>observer.disconnect();
+  },[]);
   const setup=useCallback(()=>{
     const flower=createFlower("gerbera");
     const petals=flower.petals.map(prepareThread);
@@ -26,7 +33,8 @@ export function ThreadToFlower(){
       const el=section.current;if(!el)return;
       const rect=el.getBoundingClientRect();
       const sticky=el.firstElementChild?.getBoundingClientRect();
-      const top=sticky?Math.max(0,sticky.top):72;
+      const stickyNode=el.firstElementChild;
+      const top=stickyNode?parseFloat(getComputedStyle(stickyNode).top)||0:72;
       const travel=Math.max(1,rect.height-(sticky?.height??window.innerHeight));
       const p=reduced?1:clamp((top-rect.top)/travel);
       const phase=p<.18?0:p<.64?1:p<.82?2:3;
