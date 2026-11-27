@@ -3,7 +3,6 @@ import { smooth } from "./sunflower";
 import { createIntroMaterial } from "./logoIntroMaterial";
 import type { Point } from "./types";
 
-const NS="http://www.w3.org/2000/svg";
 export const INTRO_SIZE=320;
 export const INTRO_DURATION=6000;
 export const INTRO_EXIT=700;
@@ -31,23 +30,41 @@ export function introTimeline(progress:number){
 export function advanceIntroClock(elapsed:number,delta:number){
   return Math.min(INTRO_DURATION,elapsed+clamp(delta,0,64));
 }
-function readTracks(svg:string):{tracks:Track[];shape:Path2D}{
-  const doc=new DOMParser().parseFromString(svg,"image/svg+xml");
-  const d=doc.querySelector(".logo-flower path")?.getAttribute("d");
+// The official mark is a vectorized polygon path containing M/L/Z only.
+ // Parse it once in document-independent coordinates so the exact same art
+ // can be rendered offline by Node Canvas, not reconstructed in another style.
+export function readLogoContours(svg:string){
+  const group=svg.match(/<g\b[^>]*class="logo-flower"[^>]*>([\s\S]*?)<\/g>/)?.[1];
+  const d=group?.match(/<path\b[^>]*\sd="([^"]+)"/)?.[1];
   if(!d)throw new Error("Símbolo oficial não encontrado");
-  const tracks=d.match(/M[^M]+/g)?.map(segment=>{
-    const path=document.createElementNS(NS,"path");path.setAttribute("d",segment);
-    const length=path.getTotalLength();
-    const n=Math.max(4,Math.ceil(length*scale/1.1));
-    const points=Array.from({length:n+1},(_,i)=>{
-      const p=path.getPointAtLength(length*i/n);
-      return {x:center+(p.x-540)*scale,y:center+(p.y-540)*scale};
-    });
-    return {points:resample(points,1.2),length:length*scale};
-  }).filter(t=>t.length>2)??[];
-  if(!tracks.length)throw new Error("Sem contornos na logo");
-  const shape=new Path2D();
-  shape.addPath(new Path2D(d),new DOMMatrix([scale,0,0,scale,center-540*scale,center-540*scale]));
+  const tokens=d.match(/[MLZ]|[-+]?(?:\d*\.\d+|\d+\.?\d*)/g)??[];
+  if(/[A-KN-Yac-z]/.test(d))throw new Error("Formato vetorial não suportado");
+  const contours:Point[][]=[];let current:Point[]=[];let mode="M";
+  for(let i=0;i<tokens.length;){
+    const token=tokens[i];
+    if(token==="M"||token==="L"){mode=token;i++;continue;}
+    if(token==="Z"){if(current.length){current.push({...current[0]});contours.push(current);current=[];}i++;continue;}
+    const x=Number(tokens[i++]),y=Number(tokens[i++]);
+    if(!Number.isFinite(x)||!Number.isFinite(y))throw new Error("Coordenada inválida");
+    if(mode==="M"){if(current.length)contours.push(current);current=[];mode="L";}
+    current.push({x:center+(x-540)*scale,y:center+(y-540)*scale});
+  }
+  if(current.length)contours.push(current);
+  if(!contours.length)throw new Error("Sem contornos na logo");
+  return contours;
+}
+function readTracks(svg:string):{tracks:Track[];shape:Path2D}{
+  const contours=readLogoContours(svg),shape=new Path2D();
+  const tracks=contours.map(points=>{
+    shape.moveTo(points[0].x,points[0].y);
+    let length=0;
+    for(let i=1;i<points.length;i++){
+      shape.lineTo(points[i].x,points[i].y);
+      length+=Math.hypot(points[i].x-points[i-1].x,points[i].y-points[i-1].y);
+    }
+    shape.closePath();
+    return {points:resample(points,1.2),length};
+  }).filter(t=>t.length>2);
   return {tracks,shape};
 }
 function prefix(points:readonly Point[],amount:number):Point[]{
