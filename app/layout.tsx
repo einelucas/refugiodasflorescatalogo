@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Poppins } from "next/font/google";
 import { Toaster } from "sonner";
+import { ChenilleLogoIntro } from "@/components/site/chenille/ChenilleLogoIntro";
+import { INTRO_BOOTSTRAP, INTRO_CRITICAL_CSS } from "@/lib/chenille/introBootstrap";
 import "./globals.css";
 // CSS do site público, dividido por responsabilidade (ordem em index.css).
 import "@/styles/site/index.css";
@@ -67,8 +69,13 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={`${bodyFont.variable} ${displayFont.variable}`}>
+    <html lang="pt-BR" className={`${bodyFont.variable} ${displayFont.variable}`} suppressHydrationWarning>
+      <head>
+        <style dangerouslySetInnerHTML={{ __html: INTRO_CRITICAL_CSS }} />
+        <script dangerouslySetInnerHTML={{ __html: INTRO_BOOTSTRAP }} />
+      </head>
       <body>
+        <ChenilleLogoIntro />
         {children}
         <Toaster richColors position="top-center" />
       </body>
