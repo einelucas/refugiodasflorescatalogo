@@ -1,6 +1,6 @@
 # Chenille no catálogo
 
-Motor Canvas 2D independente, sem novas dependências. O banner recebe flores pré-renderizadas e sublinhado progressivo. A seção após o catálogo usa scroll nativo e quatro etapas. Não há introdução bloqueante: a compra e o carregamento inicial têm prioridade.
+Motor Canvas 2D independente, sem novas dependências. O banner recebe flores pré-renderizadas e sublinhado progressivo. A seção após o catálogo usa scroll nativo e cinco etapas. Não há introdução bloqueante: a compra e o carregamento inicial têm prioridade.
 
 ## Validação local
 - npm ci
@@ -12,4 +12,7 @@ Motor Canvas 2D independente, sem novas dependências. O banner recebe flores pr
 - Testar 360, 390, 768, 1024 e 1440 px; mouse, touch, scroll, visibilidade da aba, reduced motion, busca, filtros, modal de produto, carrinho e autenticação/admin.
 - O build e o catálogo completo requerem as configurações de banco e demais variáveis do projeto.
 
-O cache é limitado a 96 tufos; cada instância de banner prepara os sprites uma vez por DPR (máximo 2). IntersectionObserver e visibilitychange interrompem o loop; ResizeObserver atualiza as dimensões. A história redesenha sob demanda por scroll, resize ou mudança da preferência de movimento. Sem JavaScript, as quatro descrições continuam no HTML.
+O cache é limitado a 128 tufos; cada instância de banner prepara os sprites uma vez por DPR (máximo 2). IntersectionObserver e visibilitychange interrompem o loop; ResizeObserver atualiza as dimensões. A história redesenha sob demanda por scroll, resize ou mudança da preferência de movimento. Sem JavaScript, as cinco descrições continuam no HTML.
+
+## Girassol de referência
+A história usa oito pétalas dianteiras e oito traseiras, sete percursos por pétala, centro vinho de tufos densos, três tulipas vermelhas, verdes, flores brancas, papel com impressão editorial original e laço vermelho. Tudo é desenhado em Canvas, sem imagens externas. As camadas do buquê e as pétalas completas ficam pré-renderizadas por DPR. A aparência é uma interpretação procedural das fotos, não uma reprodução fotográfica.

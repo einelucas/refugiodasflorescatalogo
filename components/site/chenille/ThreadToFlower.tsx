@@ -1,60 +1,62 @@
 "use client";
 import { useCallback,useEffect,useRef } from "react";
 import { useCanvasAnimation,type CanvasFrame } from "@/hooks/site/useCanvasAnimation";
-import { createFlower } from "@/lib/chenille/flowers";
+import { createSunflowerArt,stageProgress } from "@/lib/chenille/sunflower";
+import { createBouquetArt } from "@/lib/chenille/bouquet";
 import { drawThread,prepareThread } from "@/lib/chenille/engine";
-import { clamp,lerp } from "@/lib/chenille/paths";
+import { bezier,clamp,leaf,lerp,resample } from "@/lib/chenille/paths";
 import { ChenilleCanvas } from "./ChenilleCanvas";
 
 const steps=[
-  ["O fio","Tudo começa com um fio de chenille, macio e cheio de possibilidades."],
-  ["As pétalas","Curvas delicadas dão forma a cada pétala."],
-  ["O miolo","Os detalhes completam o coração da flor."],
-  ["A flor","Caule e folhas finalizam uma flor feita para durar."]
+  ["O fio","Um fio amarelo de chenille, macio e cheio de possibilidades."],
+  ["As pétalas","Fios dobrados formam pétalas douradas, em duas camadas."],
+  ["O miolo","Pequenos tufos em vinho preenchem o centro do girassol."],
+  ["A flor","O caule e as folhas completam a flor feita à mão."],
+  ["Na embalagem","O girassol ganha companhia de tulipas vermelhas, folhagens, papel estampado e um laço."]
 ] as const;
 
 export function ThreadToFlower(){
   const section=useRef<HTMLElement>(null),canvas=useRef<HTMLCanvasElement>(null);
   useEffect(()=>{
     const el=section.current;if(!el)return;
-    const observer=new IntersectionObserver(([entry])=>{
-      if(entry.isIntersecting){el.dataset.entered="true";observer.disconnect();}
-    },{threshold:.12});
+    const observer=new IntersectionObserver(([entry])=>{if(entry.isIntersecting){el.dataset.entered="true";observer.disconnect();}},{threshold:.12});
     observer.observe(el);return ()=>observer.disconnect();
   },[]);
   const setup=useCallback(()=>{
-    const flower=createFlower("gerbera");
-    const petals=flower.petals.map(prepareThread);
-    const originals=petals.map(t=>t.points.map(p=>({...p})));
-    const total=originals.reduce((n,p)=>n+p.length,0);
-    const center=flower.center.map(prepareThread),stem=flower.stem.map(prepareThread),leaves=flower.leaves.map(prepareThread);
-    let previous=-1;
-    return {draw({ctx,width,height,reduced}:CanvasFrame){
+    let previous=-1,artDpr=0;
+    let flower:ReturnType<typeof createSunflowerArt>|undefined,bouquet:ReturnType<typeof createBouquetArt>|undefined;
+    let greens:ReturnType<typeof prepareThread>[]=[];
+    return {draw({ctx,width,height,dpr,reduced}:CanvasFrame){
       const el=section.current;if(!el)return;
-      const rect=el.getBoundingClientRect();
-      const sticky=el.firstElementChild?.getBoundingClientRect();
-      const stickyNode=el.firstElementChild;
+      if(!flower||!bouquet||artDpr!==dpr){
+        // Created lazily once per DPR, not on every scroll event.
+        artDpr=dpr;flower=createSunflowerArt(dpr);bouquet=createBouquetArt(dpr);
+        greens=[
+          prepareThread({points:resample(bezier({x:0,y:32},{x:-9,y:73},{x:10,y:100},{x:2,y:130}),1.6),color:"#138451",thickness:6,shadow:"#034c35"}),
+          prepareThread({points:resample(leaf(0,88,-2.55,35,11),1.6),color:"#08784c",thickness:5.7,shadow:"#034c35"}),
+          prepareThread({points:resample(leaf(3,104,-.58,34,10),1.6),color:"#168a51",thickness:5.7,shadow:"#034c35"})
+        ];
+      }
+      const rect=el.getBoundingClientRect(),stickyNode=el.firstElementChild;
+      const sticky=stickyNode?.getBoundingClientRect();
       const top=stickyNode?parseFloat(getComputedStyle(stickyNode).top)||0:72;
       const travel=Math.max(1,rect.height-(sticky?.height??window.innerHeight));
       const p=reduced?1:clamp((top-rect.top)/travel);
-      const phase=p<.18?0:p<.64?1:p<.82?2:3;
+      const phase=p<.10?0:p<.44?1:p<.64?2:p<.79?3:4;
       if(phase!==previous){el.dataset.step=String(phase);previous=phase;}
-      const morph=clamp((p-.10)/.54),eased=morph*morph*(3-2*morph);
-      let offset=0;
-      ctx.save();ctx.translate(width/2,height*.51);
-      const scale=Math.min(width/188,height/150);ctx.scale(scale,scale);
-      for(let j=0;j<petals.length;j++){
-        const t=petals[j],original=originals[j];
-        for(let i=0;i<t.points.length;i++){
-          const x=lerp(-75,75,(offset+i)/Math.max(1,total-1));
-          t.points[i].x=lerp(x,original[i].x,eased);t.points[i].y=lerp(0,original[i].y,eased);
-        }
-        offset+=t.points.length;drawThread(ctx,t);
-      }
-      for(const t of center)drawThread(ctx,t,{end:clamp((p-.64)/.18)});
-      for(const t of stem)drawThread(ctx,t,{end:clamp((p-.81)/.12)});
-      for(const t of leaves)drawThread(ctx,t,{end:clamp((p-.91)/.09)});
+      const petals=stageProgress(p,.10,.44),center=stageProgress(p,.44,.64);
+      const stem=stageProgress(p,.64,.78),pack=stageProgress(p,.79,1);
+      const unit=Math.min(width/292,height/348);
+      const zoom=lerp(Math.min(width/218,height/222)/unit,1,Math.max(stem*.45,pack));
+      ctx.save();ctx.translate(width/2,height/2);
+      ctx.scale(unit,unit);ctx.translate(0,lerp(0,-28,Math.max(stem,pack)));
+      bouquet.back(ctx,pack);
+      ctx.save();ctx.translate(0,lerp(0,26,pack));ctx.scale(zoom*lerp(1,.85,pack),zoom*lerp(1,.85,pack));
+      ctx.save();ctx.globalAlpha=1-pack;
+      for(let i=0;i<greens.length;i++)drawThread(ctx,greens[i],{end:stageProgress(stem,i*.14,i*.14+.72)});
       ctx.restore();
+      flower.draw(ctx,petals,center);ctx.restore();
+      bouquet.front(ctx,pack);ctx.restore();
     }};
   },[]);
   useCanvasAnimation(canvas,setup,{scroll:true,observe:section});
