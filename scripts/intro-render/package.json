@@ -1,0 +1,8 @@
+{
+  "name": "refugio-intro-render",
+  "private": true,
+  "dependencies": {
+    "@napi-rs/canvas": "0.1.80",
+    "@ffmpeg-installer/ffmpeg": "1.1.0"
+  }
+}
