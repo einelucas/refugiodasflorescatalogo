@@ -2,9 +2,10 @@
 import { useEffect,useRef,useState } from "react";
 import { usePathname } from "next/navigation";
 import { INTRO_ATTRIBUTE,HOME_READY_ID } from "@/lib/chenille/introBootstrap";
+import { INTRO_VIDEO_SECONDS,INTRO_VIDEO_TITLE_SECONDS } from "@/lib/chenille/introVideoTiming";
 
 const LOAD_LIMIT=2500;
-const PLAY_LIMIT=8500;
+const PLAY_LIMIT=INTRO_VIDEO_SECONDS*1000+1500;
 const EXIT_MS=700;
 const CATALOG_WAIT_LIMIT=1200;
 
@@ -61,7 +62,7 @@ export function ChenilleLogoIntro(){
       playTimer=window.setTimeout(exit,PLAY_LIMIT);
     };
     const onTime=()=>{
-      if(Number.isFinite(video.duration)&&video.duration>0&&video.currentTime/video.duration>=.79)
+      if(Number.isFinite(video.duration)&&video.duration>0&&video.currentTime>=INTRO_VIDEO_TITLE_SECONDS)
         overlay.dataset.title="true";
     };
     const onError=()=>exit();
@@ -102,7 +103,7 @@ export function ChenilleLogoIntro(){
   return <div ref={overlayRef} className="chenille-logo-intro" role="dialog" aria-label="Abertura do Refúgio das Flores">
     <div className="chenille-logo-intro-inner" aria-hidden="true">
       <div className="chenille-logo-intro-media">
-        <video ref={videoRef} className="chenille-logo-intro-video" src="/imagens/chenille-intro.mp4" poster="/imagens/chenille-intro-poster.png" autoPlay muted playsInline preload="auto" tabIndex={-1} disablePictureInPicture />
+        <video ref={videoRef} className="chenille-logo-intro-video" src="/imagens/chenille-intro.mp4?v=2" poster="/imagens/chenille-intro-poster.png?v=2" autoPlay muted playsInline preload="auto" tabIndex={-1} disablePictureInPicture />
         <span className="chenille-logo-intro-wire" />
       </div>
       <p className="chenille-logo-intro-wordmark">Refúgio das Flores</p>
