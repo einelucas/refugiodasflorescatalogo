@@ -2,7 +2,7 @@
 import { useEffect,useRef,useState } from "react";
 import { usePathname } from "next/navigation";
 import { createLogoIntro,INTRO_SIZE,INTRO_DURATION,INTRO_EXIT,introTimeline } from "@/lib/chenille/logoIntro";
-import { INTRO_ATTRIBUTE,INTRO_SESSION_KEY,HOME_READY_ID } from "@/lib/chenille/introBootstrap";
+import { INTRO_ATTRIBUTE,HOME_READY_ID } from "@/lib/chenille/introBootstrap";
 
 export function ChenilleLogoIntro(){
   const pathname=usePathname();
@@ -32,7 +32,6 @@ export function ChenilleLogoIntro(){
     const finish=()=>{
       if(done)return;done=true;cancelAnimationFrame(raf);controller.abort();observer?.disconnect();
       root.removeAttribute(INTRO_ATTRIBUTE);
-      try{sessionStorage.setItem(INTRO_SESSION_KEY,"1");}catch{/* Optional storage. */}
       setVisible(false);
     };
     skipRef.current=finish;
