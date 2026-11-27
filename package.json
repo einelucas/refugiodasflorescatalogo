@@ -12,7 +12,10 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed:dry": "cross-env DRY_RUN=1 tsx prisma/seed.ts"
+    "db:seed:dry": "cross-env DRY_RUN=1 tsx prisma/seed.ts",
+    "intro:render": "node scripts/intro-render/prepare.mjs",
+    "prebuild": "npm run intro:render",
+    "predev": "npm run intro:render"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
