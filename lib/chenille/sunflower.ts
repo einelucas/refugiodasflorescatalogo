@@ -78,12 +78,14 @@ export function wirePose(loops:readonly WireLoop[],progress:number):{points:Poin
   const initial=stageProgress(p,0,.065);
   // Return to a common free-end direction at each joint, so changing loops cannot jump.
   const follow=Math.sin(Math.PI*local)**2;
-  const delta=Math.atan2(Math.sin(angle-Math.PI),Math.cos(angle-Math.PI));
-  const tailAngle=Math.PI+delta*follow;
   const length=lerp(132,24,initial)*(1-stageProgress(p,.94,1));
   if(length>0.01){
-    const end={x:tip.x+Math.cos(tailAngle)*length,y:tip.y+Math.sin(tailAngle)*length};
-    const tail=bezier(tip,{x:tip.x+Math.cos(tailAngle)*length*.33,y:tip.y+Math.sin(tailAngle)*length*.33},mix(tip,end,.75),end,20);
+    // The free length flexes from the current tangent into a relaxed, trailing curve.
+    // Vector blending avoids angular discontinuities at +/- PI.
+    const tangent={x:lerp(-1,Math.cos(angle),follow),y:Math.sin(angle)*follow};
+    const end={x:tip.x+length*lerp(-1,tangent.x,.78),y:tip.y+length*tangent.y*.78};
+    const control={x:tip.x+tangent.x*length*.45,y:tip.y+tangent.y*length*.45};
+    const tail=bezier(tip,control,{x:end.x+length*.18,y:end.y},end,24);
     formed.push(...tail.slice(1));
   }
   return {points:resample(formed,1.3),index:i,local};
