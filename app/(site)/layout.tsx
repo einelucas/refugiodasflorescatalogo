@@ -3,7 +3,6 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { BotaoVoltarTopo } from "@/components/site/BotaoVoltarTopo";
 import { CarrinhoProvider } from "@/components/site/CarrinhoContext";
 import { HeroBanner } from "@/components/site/layout/HeroBanner";
-import { ChenilleLogoIntro } from "@/components/site/chenille/ChenilleLogoIntro";
 import { SiteFooter } from "@/components/site/layout/SiteFooter";
 import { buscarWhatsappLoja } from "@/lib/loja";
 import { montarLinkWhatsApp } from "@/lib/whatsapp";
@@ -25,7 +24,6 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
   return (
     <CarrinhoProvider>
       <div className="public-site">
-        <ChenilleLogoIntro />
         <SiteHeader />
         <HeroBanner />
 
