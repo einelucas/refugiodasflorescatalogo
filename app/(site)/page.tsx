@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { Catalogo } from "@/components/site/Catalogo";
 import { ThreadToFlower } from "@/components/site/chenille/ThreadToFlower";
+import { HOME_READY_ID } from "@/lib/chenille/introBootstrap";
 import { normalizarUrlImagem, serializarCategoriaCatalogo } from "@/lib/catalogo";
 import { buscarWhatsappLoja } from "@/lib/loja";
 import { formatarBRL } from "@/lib/utils";
@@ -66,6 +67,7 @@ export default async function HomePage({ searchParams }: PropsPagina) {
       categorias={categorias.map(serializarCategoriaCatalogo)}
     />
     <ThreadToFlower />
+    <span id={HOME_READY_ID} hidden />
     </>
   );
 }
