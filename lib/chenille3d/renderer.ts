@@ -1,6 +1,7 @@
 import { activeWire,centerGeometry,companionGreenery,petalGeometry,petalOrder,stemGeometry,tulipGeometry,whiteFillers,type Geometry } from "./geometry";
 import { SUNFLOWER_PETALS,stageProgress } from "../chenille/sunflower";
 import { clamp,lerp } from "../chenille/paths";
+import { createChenilleTexture } from "./chenilleMaterial";
 
 const WIDTH=340,HEIGHT=390,OX=170,OY=162;
 const vertex=`
@@ -14,6 +15,8 @@ uniform vec2 uOrigin;
 varying vec3 vNormal;
 varying vec3 vColor;
 varying vec2 vLocal;
+varying vec3 vMaterialPosition;
+varying vec3 vMaterialNormal;
 vec3 rotateModel(vec3 v){
   float c=cos(uAngles.z),s=sin(uAngles.z);
   v=vec3(c*v.x-s*v.y,s*v.x+c*v.y,v.z);
@@ -27,22 +30,43 @@ void main(){
   vec2 screen=p.xy+uOrigin;
   gl_Position=vec4(screen.x/uViewport.x*2.0-1.0,1.0-screen.y/uViewport.y*2.0,-p.z/300.0,1.0);
   vNormal=rotateModel(aNormal);vColor=aColor;vLocal=aPosition.xy;
+  vMaterialPosition=aPosition;vMaterialNormal=aNormal;
 }`;
 const fragment=`
 precision mediump float;
 varying vec3 vNormal;
 varying vec3 vColor;
 varying vec2 vLocal;
-uniform vec3 uReveal; // direction and radial cutoff
+varying vec3 vMaterialPosition;
+varying vec3 vMaterialNormal;
+uniform vec3 uReveal;
+uniform sampler2D uChenille;
+float textile(vec3 p,vec3 n){
+  // Object-space triplanar sampling keeps the textile attached during rotation.
+  vec3 w=pow(abs(normalize(n)),vec3(4.0));
+  w/=max(w.x+w.y+w.z,0.0001);
+  vec3 q=p/11.5;
+  float tx=texture2D(uChenille,q.zy+vec2(0.27,0.13)).r;
+  float ty=texture2D(uChenille,q.xz+vec2(0.43,0.62)).r;
+  float tz=texture2D(uChenille,q.xy).r;
+  return dot(w,vec3(tx,ty,tz));
+}
 void main(){
   if(dot(vLocal,uReveal.xy)>uReveal.z)discard;
   vec3 n=normalize(vNormal);
   vec3 light=normalize(vec3(-0.48,-0.66,0.83));
+  float nap=textile(vMaterialPosition,vMaterialNormal);
+  // The sampled textile supplies small valleys and raised loops, not a color decal.
+  float grain=textile(vMaterialPosition*2.17+vec3(5.1,1.8,8.3),vMaterialNormal);
+  float relief=mix(nap,grain,0.22);
   float key=max(dot(n,light),0.0);
   float fill=max(dot(n,normalize(vec3(0.8,0.05,0.55))),0.0);
-  float rim=max(dot(n,normalize(vec3(0.1,0.5,-0.8))),0.0);
-  float sheen=pow(max(dot(n,normalize(light+vec3(0.0,0.0,1.0))),0.0),11.0);
-  vec3 c=vColor*(0.66+0.40*key+0.13*fill+0.07*rim)+vec3(0.085,0.068,0.045)*sheen;
+  float edge=pow(1.0-abs(n.z),2.0);
+  // Broad matte velvet scattering replaces the smooth plastic-like specular highlight.
+  float diffuse=0.76+0.26*key+0.10*fill;
+  float micro=0.76+0.46*relief;
+  float softPile=edge*(0.025+0.065*relief);
+  vec3 c=vColor*diffuse*micro+vec3(softPile)*mix(0.45,1.0,max(vColor.r,max(vColor.g,vColor.b)));
   gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);
 }`;
 type Mesh={buffer:WebGLBuffer;count:number};
@@ -71,8 +95,10 @@ export function createChenille3D(dpr:number){
   if(!gl)return null;
   const meshes:Mesh[]=[];
   let program:WebGLProgram|undefined;
+  let textile:WebGLTexture|undefined;
   try{
     const p=createProgram(gl);program=p;gl.useProgram(p);
+    textile=createChenilleTexture(gl);gl.uniform1i(gl.getUniformLocation(p,"uChenille"),0);
     const pos=gl.getAttribLocation(p,"aPosition"),normal=gl.getAttribLocation(p,"aNormal"),color=gl.getAttribLocation(p,"aColor");
     const pose=gl.getUniformLocation(p,"uPose"),angles=gl.getUniformLocation(p,"uAngles"),reveal=gl.getUniformLocation(p,"uReveal");
     gl.uniform2f(gl.getUniformLocation(p,"uViewport"),WIDTH,HEIGHT);
@@ -144,10 +170,10 @@ export function createChenille3D(dpr:number){
         if(buds>0)draw(white,{y:15*(1-buds),z:6,scale:lerp(.82,1,buds)},[0,-1,40*buds]);
         composite(ctx);return true;
       },
-      dispose(){meshes.forEach(m=>gl.deleteBuffer(m.buffer));gl.deleteProgram(p);}
+      dispose(){meshes.forEach(m=>gl.deleteBuffer(m.buffer));if(textile)gl.deleteTexture(textile);gl.deleteProgram(p);}
     };
   }catch{
-    meshes.forEach(m=>gl.deleteBuffer(m.buffer));if(program)gl.deleteProgram(program);
+    meshes.forEach(m=>gl.deleteBuffer(m.buffer));if(textile)gl.deleteTexture(textile);if(program)gl.deleteProgram(program);
     return null;
   }
 }
