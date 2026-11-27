@@ -4,7 +4,8 @@ import { readFileSync,writeFileSync,statSync,mkdirSync,renameSync,rmSync } from 
 import { spawn } from "node:child_process";
 import { once } from "node:events";
 import { join } from "node:path";
-import { createLogoIntro,INTRO_SIZE,INTRO_DURATION } from "../../lib/chenille/logoIntro";
+import { createLogoIntro,INTRO_SIZE } from "../../lib/chenille/logoIntro";
+import { INTRO_VIDEO_SECONDS,introVideoSourceProgress } from "../../lib/chenille/introVideoTiming";
 
 // Only the canvas construction APIs used by the existing renderer are needed.
 Object.assign(globalThis,{
@@ -14,7 +15,7 @@ Object.assign(globalThis,{
     return createCanvas(1,1);
   }}
 });
-const fps=30,dpr=2,size=INTRO_SIZE*dpr,frames=Math.round(INTRO_DURATION/1000*fps);
+const fps=30,dpr=2,size=INTRO_SIZE*dpr,frames=Math.round(INTRO_VIDEO_SECONDS*fps);
 const out=join(process.cwd(),"public/imagens");
 mkdirSync(out,{recursive:true});
 const target=join(out,"chenille-intro.mp4"),temp=join(out,"chenille-intro.tmp.mp4");
@@ -37,7 +38,7 @@ const closed=new Promise<void>((resolve,reject)=>{
 closed.catch(()=>{}); // The error is propagated after encoding/when the stream closes.
 try{
   for(let i=0;i<frames;i++){
-    art.draw(ctx as unknown as CanvasRenderingContext2D,i/(frames-1));
+    art.draw(ctx as unknown as CanvasRenderingContext2D,introVideoSourceProgress(i/(frames-1)*INTRO_VIDEO_SECONDS));
     paint.fillStyle="#684675";paint.fillRect(0,0,size,size);
     paint.drawImage(transparent,0,0);
     if(i===0)writeFileSync(poster,frame.toBuffer("image/png"));
