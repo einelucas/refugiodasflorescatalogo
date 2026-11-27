@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { Catalogo } from "@/components/site/Catalogo";
+import { ThreadToFlower } from "@/components/site/chenille/ThreadToFlower";
 import { normalizarUrlImagem, serializarCategoriaCatalogo } from "@/lib/catalogo";
 import { buscarWhatsappLoja } from "@/lib/loja";
 import { formatarBRL } from "@/lib/utils";
@@ -58,10 +59,13 @@ export default async function HomePage({ searchParams }: PropsPagina) {
   ]);
 
   return (
+    <>
     <Catalogo
       whatsapp={whatsapp}
       produtoInicialId={produtoInicialId}
       categorias={categorias.map(serializarCategoriaCatalogo)}
     />
+    <ThreadToFlower />
+    </>
   );
 }
