@@ -46,17 +46,28 @@ export function ThreadToFlower(){
       if(phase!==previous){el.dataset.step=String(phase);previous=phase;}
       const petals=stageProgress(p,.08,.54),center=stageProgress(p,.54,.66);
       const stem=stageProgress(p,.66,.77),pack=stageProgress(p,.77,1);
-      const unit=Math.min(width/332,height/380);
+      const unit=Math.min(width/340,height/390);
       const zoom=lerp(Math.min(width/218,height/222)/unit,1,Math.max(stem*.45,pack));
+      const flowerScale=zoom*lerp(1,.91,pack);
+      const flowerY=lerp(0,19,pack);
       ctx.save();ctx.translate(width/2,height/2);
       ctx.scale(unit,unit);ctx.translate(0,lerp(0,-28,Math.max(stem,pack)));
       bouquet.back(ctx,pack);
-      ctx.save();ctx.translate(0,lerp(0,26,pack));ctx.scale(zoom*lerp(1,.85,pack),zoom*lerp(1,.85,pack));
-      ctx.save();ctx.globalAlpha=1-stageProgress(pack,.26,.65);
+      // Stem stays inside the wrapper. The bloom itself belongs to the front
+      // of the arrangement, never clipped by the lateral paper panels.
+      ctx.save();ctx.translate(0,flowerY);ctx.scale(flowerScale,flowerScale);
+      ctx.globalAlpha=1-stageProgress(pack,.26,.65);
       for(let i=0;i<greens.length;i++)drawThread(ctx,greens[i],{end:stageProgress(stem,i*.14,i*.14+.72)});
       ctx.restore();
+      bouquet.front(ctx,pack);
+      bouquet.floralForeground(ctx,pack);
+      ctx.save();ctx.translate(0,flowerY);ctx.scale(flowerScale,flowerScale);
+      if(pack>0){
+        ctx.shadowColor="rgba(52,29,10,"+(.30*stageProgress(pack,.35,.85))+")";
+        ctx.shadowBlur=5*pack;ctx.shadowOffsetY=3*pack;
+      }
       flower.draw(ctx,petals,center);ctx.restore();
-      bouquet.front(ctx,pack);ctx.restore();
+      bouquet.finish(ctx,pack);ctx.restore();
     }};
   },[]);
   useCanvasAnimation(canvas,setup,{scroll:true,observe:section});
