@@ -4,7 +4,7 @@
 .public-site .chenille-underlined {position:relative;display:inline-block;white-space:nowrap;}
 .public-site .chenille-underline {position:absolute;left:0;bottom:-5px;width:100%;height:10px;pointer-events:none;}
 .public-site .chenille-story {
-  width:min(100% - 32px,1200px);margin:48px auto 64px;min-height:calc(560px + 125vh);
+  width:min(100% - 32px,1200px);margin:48px auto 64px;min-height:calc(560px + 230vh);
   border:1px solid var(--lavender);border-radius:var(--radius-card);
   background:radial-gradient(ellipse at 24% 40%,var(--rose-light),var(--rose-pale) 66%);
 }
@@ -29,7 +29,7 @@
 .public-site .chenille-story[data-step="3"] li:nth-child(4),
 .public-site .chenille-story[data-step="4"] li:nth-child(5) {background:var(--white);border-color:var(--lavender);}
 @media(max-width:767px){
-  .public-site .chenille-story {min-height:calc(520px + 95vh);margin:32px auto 40px;}
+  .public-site .chenille-story {min-height:calc(520px + 190vh);margin:32px auto 40px;}
   .public-site .chenille-story-sticky {grid-template-columns:minmax(0,1fr);gap:6px;padding:12px;top:calc(var(--header-bar-height) + 4px);}
   .public-site .chenille-story-art {height:clamp(128px,29svh,265px);aspect-ratio:auto;}
   .public-site .chenille-story-copy h2 {margin:4px 0 8px;}
