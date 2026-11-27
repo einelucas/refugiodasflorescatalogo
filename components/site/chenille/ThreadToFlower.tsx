@@ -51,12 +51,22 @@ export function ThreadToFlower(){
       ctx.save();ctx.translate(width/2,height/2);
       ctx.scale(unit,unit);ctx.translate(0,lerp(0,-28,Math.max(stem,pack)));
       bouquet.back(ctx,pack);
-      ctx.save();ctx.translate(0,lerp(0,26,pack));ctx.scale(zoom*lerp(1,.85,pack),zoom*lerp(1,.85,pack));
-      ctx.save();ctx.globalAlpha=1-stageProgress(pack,.26,.65);
+      const flowerScale=zoom*lerp(1,.85,pack);
+      const flowerY=lerp(0,26,pack);
+      // Keep stems and leaves behind the front newspaper folds.
+      ctx.save();ctx.translate(0,flowerY);ctx.scale(flowerScale,flowerScale);
+      ctx.globalAlpha=1-stageProgress(pack,.26,.65);
       for(let i=0;i<greens.length;i++)drawThread(ctx,greens[i],{end:stageProgress(stem,i*.14,i*.14+.72)});
       ctx.restore();
-      flower.draw(ctx,petals,center);ctx.restore();
-      bouquet.front(ctx,pack);ctx.restore();
+      // Preserve the original bloom artwork; only lift its head above the paper.
+      const drawBloom=()=>{
+        ctx.save();
+        ctx.translate(0,flowerY-8*stageProgress(pack,.35,.85));
+        ctx.scale(flowerScale,flowerScale);
+        flower?.draw(ctx,petals,center);
+        ctx.restore();
+      };
+      bouquet.front(ctx,pack,drawBloom);ctx.restore();
     }};
   },[]);
   useCanvasAnimation(canvas,setup,{scroll:true,observe:section});
