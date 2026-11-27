@@ -1,12 +1,10 @@
 // Executed in the document head, before the first paint or React hydration.
-export const INTRO_SESSION_KEY="refugio-chenille-intro-v3";
 export const INTRO_ATTRIBUTE="data-refugio-intro";
 export const HOME_READY_ID="refugio-home-ready";
 export const INTRO_BOOTSTRAP=`(function(){
   var root=document.documentElement;
   try {
     if(location.pathname!=="/"||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-    try { if(sessionStorage.getItem("${INTRO_SESSION_KEY}"))return; } catch(e) {}
     root.setAttribute("${INTRO_ATTRIBUTE}","pending");
     // Never strand a visitor if hydration fails or JavaScript assets are slow.
     setTimeout(function(){
