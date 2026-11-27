@@ -1,10 +1,9 @@
 "use client";
 import { useEffect,useRef,useState } from "react";
 import { usePathname } from "next/navigation";
-import { createLogoIntro,INTRO_SIZE } from "@/lib/chenille/logoIntro";
+import { createLogoIntro,INTRO_SIZE,INTRO_DURATION,INTRO_EXIT,introTimeline } from "@/lib/chenille/logoIntro";
 
-const KEY="refugio-chenille-intro-v1";
-const DURATION=2450;
+const KEY="refugio-chenille-intro-v2";
 
 export function ChenilleLogoIntro(){
   const pathname=usePathname();
@@ -21,7 +20,7 @@ export function ChenilleLogoIntro(){
     if(!visible)return;
     const canvas=canvasRef.current,ctx=canvas?.getContext("2d");
     if(!canvas||!ctx){setVisible(false);return;}
-    let raf=0,done=false,exitTimer=0;
+    let raf=0,done=false,exitTimer=0,playTimer=0;
     const controller=new AbortController();
     const motion=window.matchMedia("(prefers-reduced-motion: reduce)");
     const finish=()=>{
@@ -30,7 +29,7 @@ export function ChenilleLogoIntro(){
       setVisible(false);
     };
     // Do not turn the animation into a blocking network-dependent loader.
-    const deadline=window.setTimeout(finish,3650);
+    const deadline=window.setTimeout(finish,2200);
     const onMotion=()=>{if(motion.matches)finish();};
     const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")finish();};
     motion.addEventListener("change",onMotion);
@@ -43,20 +42,22 @@ export function ChenilleLogoIntro(){
       .then(svg=>{
         if(done)return;
         const art=createLogoIntro(svg,dpr);
+        clearTimeout(deadline);
+        playTimer=window.setTimeout(finish,INTRO_DURATION+INTRO_EXIT+1200);
         let start:number|undefined;
         const frame=(now:number)=>{
           if(done)return;start??=now;
-          const p=Math.min(1,(now-start)/DURATION);
+          const p=Math.min(1,(now-start)/INTRO_DURATION);
           art.draw(ctx,p);
-          canvas.dataset.finished=p>=1?"true":"false";
+          if(introTimeline(p).title)canvas.closest(".chenille-logo-intro")?.setAttribute("data-title","true");
           if(p<1){raf=requestAnimationFrame(frame);}else{
             canvas.closest(".chenille-logo-intro")?.setAttribute("data-exiting","true");
-            exitTimer=window.setTimeout(finish,450);
+            exitTimer=window.setTimeout(finish,INTRO_EXIT);
           }
         };
         raf=requestAnimationFrame(frame);
       }).catch(()=>{if(!done)finish();});
-    return ()=>{done=true;controller.abort();cancelAnimationFrame(raf);clearTimeout(deadline);clearTimeout(exitTimer);motion.removeEventListener("change",onMotion);window.removeEventListener("keydown",onKey);};
+    return ()=>{done=true;controller.abort();cancelAnimationFrame(raf);clearTimeout(deadline);clearTimeout(exitTimer);clearTimeout(playTimer);motion.removeEventListener("change",onMotion);window.removeEventListener("keydown",onKey);};
   },[visible]);
   if(!visible||pathname!=="/")return null;
   return <div className="chenille-logo-intro">
