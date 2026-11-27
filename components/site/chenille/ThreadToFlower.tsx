@@ -42,17 +42,17 @@ export function ThreadToFlower(){
       const top=stickyNode?parseFloat(getComputedStyle(stickyNode).top)||0:72;
       const travel=Math.max(1,rect.height-(sticky?.height??window.innerHeight));
       const p=reduced?1:clamp((top-rect.top)/travel);
-      const phase=p<.10?0:p<.44?1:p<.64?2:p<.79?3:4;
+      const phase=p<.08?0:p<.54?1:p<.66?2:p<.77?3:4;
       if(phase!==previous){el.dataset.step=String(phase);previous=phase;}
-      const petals=stageProgress(p,.10,.44),center=stageProgress(p,.44,.64);
-      const stem=stageProgress(p,.64,.78),pack=stageProgress(p,.79,1);
-      const unit=Math.min(width/292,height/348);
+      const petals=stageProgress(p,.08,.54),center=stageProgress(p,.54,.66);
+      const stem=stageProgress(p,.66,.77),pack=stageProgress(p,.77,1);
+      const unit=Math.min(width/332,height/380);
       const zoom=lerp(Math.min(width/218,height/222)/unit,1,Math.max(stem*.45,pack));
       ctx.save();ctx.translate(width/2,height/2);
       ctx.scale(unit,unit);ctx.translate(0,lerp(0,-28,Math.max(stem,pack)));
       bouquet.back(ctx,pack);
       ctx.save();ctx.translate(0,lerp(0,26,pack));ctx.scale(zoom*lerp(1,.85,pack),zoom*lerp(1,.85,pack));
-      ctx.save();ctx.globalAlpha=1-pack;
+      ctx.save();ctx.globalAlpha=1-stageProgress(pack,.26,.65);
       for(let i=0;i<greens.length;i++)drawThread(ctx,greens[i],{end:stageProgress(stem,i*.14,i*.14+.72)});
       ctx.restore();
       flower.draw(ctx,petals,center);ctx.restore();
