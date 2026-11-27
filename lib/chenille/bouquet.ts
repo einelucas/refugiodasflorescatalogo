@@ -75,11 +75,13 @@ export function createBouquetArt(dpr:number){
       tulips.forEach((image,i)=>show(ctx,image,stageProgress(p,.07+i*.045,.37+i*.06),(i-1)*22,42,(i-1)*.12,.85));
       show(ctx,buds,stageProgress(p,.29,.52),0,15,0,.86);
     },
-    front(ctx:CanvasRenderingContext2D,p:number){
+    front(ctx:CanvasRenderingContext2D,p:number,drawBloom?:()=>void){
       // The outer sheets swing in around the neck, with the flowers between the layers.
       show(ctx,left,stageProgress(p,.54,.82),-20,12,-.42,1,111);
       show(ctx,right,stageProgress(p,.61,.89),20,12,.42,1,111);
       show(ctx,collar,stageProgress(p,.73,.94),0,19,0,.98,111);
+      // Only the sunflower bloom sits above the paper. The bow stays foremost.
+      drawBloom?.();
       show(ctx,bow,stageProgress(p,.87,1),0,12,0,.8,112);
     }
   };
