@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync,readFileSync,writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
-const inputs=["public/imagens/logo-refugio.svg","lib/chenille/logoIntro.ts","lib/chenille/logoIntroMaterial.ts","lib/chenille/paths.ts","lib/chenille/sunflower.ts","lib/chenille3d/chenilleMaterial.ts","scripts/intro-render/render.mts","scripts/intro-render/package.json"];
+const inputs=["public/imagens/logo-refugio.svg","lib/chenille/logoIntro.ts","lib/chenille/introVideoTiming.ts","lib/chenille/logoIntroMaterial.ts","lib/chenille/paths.ts","lib/chenille/sunflower.ts","lib/chenille3d/chenilleMaterial.ts","scripts/intro-render/render.mts","scripts/intro-render/package.json"];
 const digest=createHash("sha256");
 for(const file of inputs)digest.update(readFileSync(file));
 const key=digest.digest("hex"), stamp="public/imagens/chenille-intro.sha256";
