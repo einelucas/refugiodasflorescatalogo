@@ -1,6 +1,3 @@
-.public-site .chenille-floating {
-  position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;
-}
 .public-site .chenille-underlined {position:relative;display:inline-block;white-space:nowrap;}
 .public-site .chenille-underline {position:absolute;left:0;bottom:-5px;width:100%;height:10px;pointer-events:none;}
 .public-site .chenille-story {
