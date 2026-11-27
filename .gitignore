@@ -6,3 +6,9 @@ node_modules
 *.tsbuildinfo
 next-env.d.ts
 /prisma/migrations/dev.db*
+
+# Generated opening media (reproducible on build/dev)
+/public/imagens/chenille-intro.mp4
+/public/imagens/chenille-intro-poster.png
+/public/imagens/chenille-intro.sha256
+/public/imagens/chenille-intro.tmp.mp4

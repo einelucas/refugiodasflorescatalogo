@@ -1,100 +1,111 @@
 "use client";
 import { useEffect,useRef,useState } from "react";
 import { usePathname } from "next/navigation";
-import { createLogoIntro,INTRO_SIZE,INTRO_DURATION,INTRO_EXIT,introTimeline,advanceIntroClock } from "@/lib/chenille/logoIntro";
 import { INTRO_ATTRIBUTE,HOME_READY_ID } from "@/lib/chenille/introBootstrap";
+import { INTRO_VIDEO_SECONDS,INTRO_VIDEO_TITLE_SECONDS } from "@/lib/chenille/introVideoTiming";
+
+const LOAD_LIMIT=2500;
+const PLAY_LIMIT=INTRO_VIDEO_SECONDS*1000+1500;
+const EXIT_MS=700;
+const CATALOG_WAIT_LIMIT=1200;
 
 export function ChenilleLogoIntro(){
   const pathname=usePathname();
   const [visible,setVisible]=useState(false);
-  const canvasRef=useRef<HTMLCanvasElement>(null);
+  const videoRef=useRef<HTMLVideoElement>(null);
+  const overlayRef=useRef<HTMLDivElement>(null);
   const skipRef=useRef<()=>void>(()=>{});
+
   useEffect(()=>{
-    // Only the pre-paint document bootstrap can opt in. Client navigation
-    // must never trigger a late splash over an already-visible catalogue.
     const root=document.documentElement;
-    if(pathname!=="/"){
-      root.removeAttribute(INTRO_ATTRIBUTE);setVisible(false);return;
-    }
+    if(pathname!=="/"){root.removeAttribute(INTRO_ATTRIBUTE);setVisible(false);return;}
     if(root.getAttribute(INTRO_ATTRIBUTE)==="pending")setVisible(true);
   },[pathname]);
+
   useEffect(()=>{
     if(!visible||pathname!=="/")return;
-    const root=document.documentElement;
-    const canvas=canvasRef.current,ctx=canvas?.getContext("2d");
-    if(!canvas||!ctx||!root.hasAttribute(INTRO_ATTRIBUTE)){
+    const root=document.documentElement,video=videoRef.current,overlay=overlayRef.current;
+    if(!video||!overlay||!root.hasAttribute(INTRO_ATTRIBUTE)){
       root.removeAttribute(INTRO_ATTRIBUTE);setVisible(false);return;
     }
-    let raf=0,done=false,exitTimer=0,playTimer=0,exiting=false;
+    let done=false,playing=false,exiting=false;
+    let loadTimer=0,playTimer=0,exitTimer=0,readyTimer=0;
     let observer:MutationObserver|undefined;
-    const controller=new AbortController();
     const motion=window.matchMedia("(prefers-reduced-motion: reduce)");
     const finish=()=>{
-      if(done)return;done=true;cancelAnimationFrame(raf);controller.abort();observer?.disconnect();
-      root.removeAttribute(INTRO_ATTRIBUTE);
-      setVisible(false);
+      if(done)return;done=true;
+      video.pause();observer?.disconnect();
+      clearTimeout(loadTimer);clearTimeout(playTimer);clearTimeout(exitTimer);clearTimeout(readyTimer);
+      root.removeAttribute(INTRO_ATTRIBUTE);setVisible(false);
+    };
+    const exit=()=>{
+      if(done||exiting)return;exiting=true;
+      video.pause();observer?.disconnect();
+      clearTimeout(loadTimer);clearTimeout(playTimer);clearTimeout(readyTimer);
+      overlay.dataset.exiting="true";
+      exitTimer=window.setTimeout(finish,EXIT_MS);
     };
     skipRef.current=finish;
-    const exit=()=>{
-      if(done||exiting)return;exiting=true;observer?.disconnect();clearTimeout(playTimer);
-      canvas.closest(".chenille-logo-intro")?.setAttribute("data-exiting","true");
-      exitTimer=window.setTimeout(finish,INTRO_EXIT);
-    };
     const revealWhenReady=()=>{
-      // The server page emits this marker after fetching its catalogue.
-      // If it streams later than the motion, hold the completed logo.
+      if(done||exiting)return;
+      clearTimeout(playTimer);
+      overlay.dataset.title="true";
       if(document.getElementById(HOME_READY_ID)){exit();return;}
-      observer=new MutationObserver(()=>{
-        if(document.getElementById(HOME_READY_ID))exit();
-      });
+      observer=new MutationObserver(()=>{if(document.getElementById(HOME_READY_ID))exit();});
       observer.observe(document.body,{childList:true,subtree:true});
+      readyTimer=window.setTimeout(exit,CATALOG_WAIT_LIMIT);
       if(document.getElementById(HOME_READY_ID))exit();
     };
-    // Asset/network and playback guards are separate; no indefinite screen lock.
-    const deadline=window.setTimeout(finish,2200);
+    const onPlaying=()=>{
+      if(done||playing)return;playing=true;
+      clearTimeout(loadTimer);overlay.dataset.playing="true";
+      playTimer=window.setTimeout(exit,PLAY_LIMIT);
+    };
+    const onTime=()=>{
+      if(Number.isFinite(video.duration)&&video.duration>0&&video.currentTime>=INTRO_VIDEO_TITLE_SECONDS)
+        overlay.dataset.title="true";
+    };
+    const onError=()=>exit();
     const onMotion=()=>{if(motion.matches)finish();};
-    const onKey=(e:KeyboardEvent)=>{if(e.key==="Escape")finish();};
+    const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")finish();};
+
+    // The first-paint cover hands off to a visible static wire. Video decode
+    // and network failures must never trap the storefront behind the splash.
+    root.setAttribute(INTRO_ATTRIBUTE,"playing");
+    video.addEventListener("playing",onPlaying);
+    video.addEventListener("timeupdate",onTime);
+    video.addEventListener("ended",revealWhenReady);
+    video.addEventListener("error",onError);
     motion.addEventListener("change",onMotion);
     window.addEventListener("keydown",onKey);
-    if(motion.matches){finish();}
-    const dpr=Math.min(window.devicePixelRatio||1,2);
-    canvas.width=canvas.height=Math.round(INTRO_SIZE*dpr);
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-    if(!done)fetch("/imagens/logo-refugio.svg",{signal:controller.signal,cache:"force-cache"})
-      .then(r=>{if(!r.ok)throw new Error("Logo indisponível");return r.text();})
-      .then(svg=>{
-        if(done)return;
-        const art=createLogoIntro(svg,dpr);
-        clearTimeout(deadline);
-        // Draw before removing the server-painted placeholder, avoiding a flash.
-        art.draw(ctx,0);
-        if(root.getAttribute(INTRO_ATTRIBUTE)!=="pending"){finish();return;}
-        root.setAttribute(INTRO_ATTRIBUTE,"playing");
-        playTimer=window.setTimeout(finish,INTRO_DURATION+INTRO_EXIT+5000);
-        let elapsed=0,previous:number|undefined;
-        const frame=(now:number)=>{
-          if(done)return;
-          elapsed=advanceIntroClock(elapsed,previous===undefined?0:now-previous);
-          previous=now;
-          const p=elapsed/INTRO_DURATION;
-          art.draw(ctx,p);
-          if(introTimeline(p).title)canvas.closest(".chenille-logo-intro")?.setAttribute("data-title","true");
-          if(p<1)raf=requestAnimationFrame(frame);
-          else revealWhenReady();
-        };
-        raf=requestAnimationFrame(frame);
-      }).catch(()=>{if(!done)finish();});
+    loadTimer=window.setTimeout(exit,LOAD_LIMIT);
+    if(motion.matches)finish();
+    else if(video.error)exit();
+    else {
+      video.muted=true;
+      if(!video.paused&&video.readyState>=2)onPlaying();
+      video.play().catch(()=>{if(!done)exit();});
+    }
     return ()=>{
-      done=true;controller.abort();observer?.disconnect();cancelAnimationFrame(raf);
-      clearTimeout(deadline);clearTimeout(exitTimer);clearTimeout(playTimer);
-      motion.removeEventListener("change",onMotion);window.removeEventListener("keydown",onKey);
+      done=true;video.pause();observer?.disconnect();
+      clearTimeout(loadTimer);clearTimeout(playTimer);clearTimeout(exitTimer);clearTimeout(readyTimer);
+      video.removeEventListener("playing",onPlaying);
+      video.removeEventListener("timeupdate",onTime);
+      video.removeEventListener("ended",revealWhenReady);
+      video.removeEventListener("error",onError);
+      motion.removeEventListener("change",onMotion);
+      window.removeEventListener("keydown",onKey);
       root.removeAttribute(INTRO_ATTRIBUTE);skipRef.current=()=>{};
     };
   },[visible,pathname]);
+
   if(!visible||pathname!=="/")return null;
-  return <div className="chenille-logo-intro" role="dialog" aria-label="Abertura do Refúgio das Flores">
+  return <div ref={overlayRef} className="chenille-logo-intro" role="dialog" aria-label="Abertura do Refúgio das Flores">
     <div className="chenille-logo-intro-inner" aria-hidden="true">
-      <canvas ref={canvasRef} className="chenille-logo-intro-canvas"/>
+      <div className="chenille-logo-intro-media">
+        <video ref={videoRef} className="chenille-logo-intro-video" src="/imagens/chenille-intro.mp4?v=2" poster="/imagens/chenille-intro-poster.png?v=2" autoPlay muted playsInline preload="auto" tabIndex={-1} disablePictureInPicture />
+        <span className="chenille-logo-intro-wire" />
+      </div>
       <p className="chenille-logo-intro-wordmark">Refúgio das Flores</p>
       <p className="chenille-logo-intro-tagline">Flores eternas, feitas à mão.</p>
     </div>

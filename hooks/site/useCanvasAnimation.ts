@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, type RefObject } from "react";
+import { INTRO_ATTRIBUTE } from "@/lib/chenille/introBootstrap";
 
 export type CanvasFrame={ctx:CanvasRenderingContext2D;width:number;height:number;dpr:number;dt:number;reduced:boolean;resized:boolean};
 type Renderer=(frame:CanvasFrame)=>boolean|void;
@@ -16,9 +17,12 @@ export function useCanvasAnimation(ref:RefObject<HTMLCanvasElement|null>,setup:S
     const renderer=setup(canvas);
     let raf=0,previous=0,visible=false,disposed=false,width=0,height=0,dpr=1,dirty=true;
     const cancel=()=>{if(raf)cancelAnimationFrame(raf);raf=0;previous=0;};
-    function request(){if(!disposed&&!raf&&visible&&!document.hidden)raf=requestAnimationFrame(frame);}
+    const introActive=()=>document.documentElement.hasAttribute(INTRO_ATTRIBUTE);
+    function request(){if(!disposed&&!raf&&visible&&!document.hidden&&!introActive())raf=requestAnimationFrame(frame);}
+    const introObserver=new MutationObserver(()=>{if(introActive())cancel();else request();});
+    introObserver.observe(document.documentElement,{attributes:true,attributeFilter:[INTRO_ATTRIBUTE]});
     function frame(now:number){
-      raf=0;if(disposed||!visible||document.hidden)return;
+      raf=0;if(disposed||!visible||document.hidden||introActive())return;
       const nextDpr=Math.min(window.devicePixelRatio||1,2);
       const resized=dirty||dpr!==nextDpr;
       if(resized){
@@ -42,6 +46,6 @@ export function useCanvasAnimation(ref:RefObject<HTMLCanvasElement|null>,setup:S
     media.addEventListener("change",change);
     window.addEventListener("resize",resize,{passive:true});
     if(scroll)window.addEventListener("scroll",onScroll,{passive:true});
-    return ()=>{disposed=true;cancel();io.disconnect();ro.disconnect();document.removeEventListener("visibilitychange",visibility);media.removeEventListener("change",change);window.removeEventListener("resize",resize);if(scroll)window.removeEventListener("scroll",onScroll);renderer.dispose?.();};
+    return ()=>{disposed=true;cancel();io.disconnect();ro.disconnect();introObserver.disconnect();document.removeEventListener("visibilitychange",visibility);media.removeEventListener("change",change);window.removeEventListener("resize",resize);if(scroll)window.removeEventListener("scroll",onScroll);renderer.dispose?.();};
   },[ref,setup,scroll,observe]);
 }
