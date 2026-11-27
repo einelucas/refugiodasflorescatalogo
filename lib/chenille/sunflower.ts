@@ -1,4 +1,5 @@
-import { drawThread,prepareThread,type PreparedThread } from "./engine";
+import { prepareThread,type PreparedThread } from "./engine";
+import { drawFloralThread } from "./floralThreads";
 import { bezier,clamp,lerp,mix,resample,seeded } from "./paths";
 import { tuftTexture } from "./textures";
 import type { Point } from "./types";
@@ -10,15 +11,15 @@ export const stageProgress=(p:number,start:number,end:number)=>smooth((p-start)/
 export type PetalPlacement={angle:number;radius:number;length:number;width:number;rear:boolean};
 // Eight broad teardrop petals above an offset second row, like the supplied bouquet.
 export const SUNFLOWER_PETALS:readonly PetalPlacement[]=[
-  ...Array.from({length:8},(_,i)=>({angle:-Math.PI/2+(i+.5)*Math.PI/4,radius:24,length:[55,58,54,61,57,58,54,60][i],width:16,rear:true})),
-  ...Array.from({length:8},(_,i)=>({angle:-Math.PI/2+i*Math.PI/4+[0,-.035,.035,-.025,.045,-.03,.025,-.03][i],radius:23,length:[64,62,65,62,66,63,66,63][i],width:[18,19,20,18,19,20,19,19][i],rear:false}))
+  ...Array.from({length:8},(_,i)=>({angle:-Math.PI/2+(i+.5)*Math.PI/4,radius:24,length:[52,54,51,58,55,57,54,57][i],width:18,rear:true})),
+  ...Array.from({length:8},(_,i)=>({angle:-Math.PI/2+i*Math.PI/4+[0,-.035,.035,-.025,.045,-.03,.025,-.03][i],radius:24,length:[65,63,64,64,69,67,62,66][i],width:[21,22,23,21,22,22,23,21][i],rear:false}))
 ];
 export function createPetalRibs(length:number,width:number):Point[][]{
   const ribs:Point[][]=[];
   // Five parallel longitudinal wires, with rounded tips and tightly closed bases.
   for(let i=-2;i<=2;i++){
-    const t=i/2,tip=length*(1-.14*Math.abs(t));
-    ribs.push(resample(bezier({x:0,y:t*2.2},{x:tip*.27,y:t*width*1.17},{x:tip*.78,y:t*width*.95},{x:tip,y:t*width*.17},24),1.35));
+    const t=i/2,tip=length*(1-.16*Math.abs(t));
+    ribs.push(resample(bezier({x:0,y:t*2.2},{x:tip*.25,y:t*width*1.20},{x:tip*.76,y:t*width*.98},{x:tip,y:t*width*.24},24),1.35));
   }
   const apex={x:length,y:0};
   const edge=(sign:number)=>bezier({x:0,y:0},{x:length*.28,y:sign*width*1.5},{x:length,y:sign*width*.78},apex,36);
@@ -29,25 +30,28 @@ function layer(width:number,height:number,dpr:number,paint:(ctx:CanvasRenderingC
   const c=document.createElement("canvas");c.width=Math.ceil(width*dpr);c.height=Math.ceil(height*dpr);
   const ctx=c.getContext("2d");if(ctx){ctx.scale(dpr,dpr);paint(ctx);}return c;
 }
-const PETAL_W=94,PETAL_H=62,OX=10,OY=31;
+const PETAL_W=102,PETAL_H=74,OX=13,OY=37;
 type PetalArt={placement:PetalPlacement;sprite:HTMLCanvasElement;ribs:PreparedThread[]};
 function petalBase(ctx:CanvasRenderingContext2D,p:PetalPlacement){
   const l=p.length,w=p.width;
   const gradient=ctx.createLinearGradient(0,-w,0,w);
-  gradient.addColorStop(0,p.rear?"#ec9b08":"#ffe15a");
-  gradient.addColorStop(.45,p.rear?"#dc8d06":"#f8bd09");
-  gradient.addColorStop(1,p.rear?"#a75a03":"#c97902");
+  gradient.addColorStop(0,p.rear?"#f2ad0a":"#ffdc36");
+  gradient.addColorStop(.25,p.rear?"#db8e04":"#ffc20a");
+  gradient.addColorStop(.50,p.rear?"#b86b04":"#dc8e00");
+  gradient.addColorStop(.74,p.rear?"#e3a00a":"#ffd32a");
+  gradient.addColorStop(1,p.rear?"#a75a03":"#c97e02");
   ctx.fillStyle=gradient;ctx.beginPath();ctx.moveTo(0,0);
   ctx.bezierCurveTo(l*.28,-w*1.5,l,-w*.78,l,0);
   ctx.bezierCurveTo(l,w*.78,l*.28,w*1.5,0,0);ctx.fill();
 }
 function makePetal(p:PetalPlacement,dpr:number):PetalArt{
   const paths=createPetalRibs(p.length,p.width);
-  const colors=p.rear?["#d88a05","#e9a00b","#efac10","#e69a08","#cf7904","#d58a07","#ce7c05"]:["#e7a106","#f5bc0c","#ffd333","#fbc20d","#e9a205","#f2b509","#e4a006"];
-  const ribs=paths.map((points,i)=>prepareThread({points,color:colors[i],thickness:i>=5?5.9:6.4,shadow:p.rear?"#a75904":"#b77503",seed:i+1}));
+  const colors=p.rear?["#e09a06","#f4ad0b","#e9a00b","#eead10","#d18705","#f6b91a","#d58b06"]:["#ffcd15","#ffdc36","#f7b808","#ffd01d","#f4ad05","#ffda28","#f2af05"];
+  const ribs=paths.map((points,i)=>prepareThread({points,color:colors[i],thickness:i>=5?5.7:4.8,shadow:p.rear?"#aa6104":"#b77a02",seed:i+1}));
   const sprite=layer(PETAL_W,PETAL_H,dpr,ctx=>{
     ctx.translate(OX,OY);ctx.save();ctx.shadowColor="#71360055";ctx.shadowBlur=3;ctx.shadowOffsetY=2;petalBase(ctx,p);ctx.restore();
-    for(const t of ribs)drawThread(ctx,t);
+    // Outer loops first; inner parallel folds sit on top with visible valleys.
+    for(const i of [5,6,0,4,1,3,2])drawFloralThread(ctx,ribs[i]);
   });
   return {placement:p,sprite,ribs};
 }
@@ -96,17 +100,17 @@ export function createSunflowerArt(dpr:number){
   const thread=prepareThread({points:[],color:"#f9c314",thickness:6.5,shadow:"#a96c04"});
   const rnd=seeded(284);
   const center:Array<{x:number;y:number;r:number;angle:number;texture:HTMLCanvasElement}>=[];
-  const shades=["#37120c","#532016","#67251a","#843326","#9e4930"];
-  for(let i=0;i<115;i++){
-    const a=i*2.39996323,r=Math.sqrt(i/114)*26;
-    center.push({x:Math.cos(a)*r+(rnd()-.5)*2.7,y:Math.sin(a)*r+(rnd()-.5)*2.7,r:4+rnd()*3.1,angle:rnd()*Math.PI,texture:tuftTexture(shades[Math.floor(rnd()*shades.length)],"#350a13",i%4)});
+  const shades=["#390912","#53101c","#6e1928","#862637","#9b3542"];
+  for(let i=0;i<160;i++){
+    const a=i*2.39996323,r=Math.sqrt(i/159)*28;
+    center.push({x:Math.cos(a)*r+(rnd()-.5)*2.7,y:Math.sin(a)*r+(rnd()-.5)*2.7,r:5+rnd()*2.8,angle:rnd()*Math.PI,texture:tuftTexture(shades[Math.floor(rnd()*shades.length)],"#2b0610",i%4)});
   }
   const disk=layer(72,72,dpr,ctx=>{ctx.translate(36,36);paintCenter(ctx,1);});
   function paintCenter(ctx:CanvasRenderingContext2D,p:number){
     if(p<=0)return;
     ctx.save();ctx.globalAlpha=Math.min(1,p*5);
-    const g=ctx.createRadialGradient(-8,-10,1,0,0,30);g.addColorStop(0,"#793521");g.addColorStop(1,"#36100c");
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,29*Math.sqrt(p),0,Math.PI*2);ctx.fill();ctx.restore();
+    const g=ctx.createRadialGradient(-8,-10,1,0,0,30);g.addColorStop(0,"#782337");g.addColorStop(1,"#310812");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,31*Math.sqrt(p),0,Math.PI*2);ctx.fill();ctx.restore();
     for(let i=0;i<Math.ceil(center.length*p);i++){
       const c=center[i];ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.angle);ctx.drawImage(c.texture,-c.r,-c.r,c.r*2,c.r*2);ctx.restore();
     }
@@ -116,7 +120,7 @@ export function createSunflowerArt(dpr:number){
     ctx.save();ctx.rotate(spec.angle);ctx.translate(spec.radius,0);
     if(fill>=.999)ctx.drawImage(art.sprite,-OX,-OY,PETAL_W,PETAL_H);
     else if(fill>0){
-      for(let j=0;j<5;j++)drawThread(ctx,art.ribs[j],{end:stageProgress(fill,j*.06,j*.06+.76)});
+      for(let j=0;j<5;j++)drawFloralThread(ctx,art.ribs[j],stageProgress(fill,j*.06,j*.06+.76));
       if(fill>.84){ctx.globalAlpha=stageProgress(fill,.84,1);ctx.drawImage(art.sprite,-OX,-OY,PETAL_W,PETAL_H);}
     }
     ctx.restore();
@@ -128,7 +132,7 @@ export function createSunflowerArt(dpr:number){
     if(p>=1)return;
     paintPetal(ctx,loops[pose.index].index,stageProgress(pose.local,.34,1));
     thread.points=pose.points;
-    drawThread(ctx,thread);
+    drawFloralThread(ctx,thread);
   }
   const full=layer(212,212,dpr,ctx=>{ctx.translate(106,106);drawPetals(ctx,1);ctx.drawImage(disk,-36,-36,72,72);});
   return {draw(ctx:CanvasRenderingContext2D,petalProgress:number,centerProgress:number){
