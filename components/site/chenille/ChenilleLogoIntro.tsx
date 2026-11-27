@@ -69,7 +69,7 @@ export function ChenilleLogoIntro(){
     const onMotion=()=>{if(motion.matches)finish();};
     const onKey=(event:KeyboardEvent)=>{if(event.key==="Escape")finish();};
 
-    // The first-paint cover hands off to a visible static wire. Video decode
+    // The first-paint cover hands off to a plain brand background. Video decode
     // and network failures must never trap the storefront behind the splash.
     root.setAttribute(INTRO_ATTRIBUTE,"playing");
     video.addEventListener("playing",onPlaying);
@@ -103,9 +103,8 @@ export function ChenilleLogoIntro(){
   return <div ref={overlayRef} className="chenille-logo-intro" role="dialog" aria-label="Abertura do Refúgio das Flores">
     <div className="chenille-logo-intro-inner" aria-hidden="true">
       <div className="chenille-logo-intro-media">
-        <video ref={videoRef} className="chenille-logo-intro-video" src="/imagens/chenille-intro.mp4?v=2" poster="/imagens/chenille-intro-poster.png?v=2" autoPlay muted playsInline preload="auto" tabIndex={-1} disablePictureInPicture />
-        <span className="chenille-logo-intro-wire" />
-      </div>
+        <video ref={videoRef} className="chenille-logo-intro-video" src="/imagens/chenille-intro.mp4?v=3" poster="/imagens/chenille-intro-poster.png?v=3" autoPlay muted playsInline preload="auto" tabIndex={-1} disablePictureInPicture />
+        </div>
       <p className="chenille-logo-intro-wordmark">Refúgio das Flores</p>
       <p className="chenille-logo-intro-tagline">Flores eternas, feitas à mão.</p>
     </div>

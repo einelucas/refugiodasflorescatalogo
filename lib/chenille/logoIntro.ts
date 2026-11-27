@@ -1,4 +1,4 @@
-import { clamp,lerp,mix,resample,seeded } from "./paths";
+import { clamp,mix,resample,seeded } from "./paths";
 import { smooth } from "./sunflower";
 import { createIntroMaterial } from "./logoIntroMaterial";
 import type { Point } from "./types";
@@ -20,8 +20,8 @@ function easeFold(value:number){
 export function introTimeline(progress:number){
   const t=clamp(progress);
   return {
-    fold:easeFold((t-.018)/.65),
-    detail:easeFold((t-.54)/.34),
+    fold:easeFold(t/.48),
+    detail:easeFold((t-.48)/.32),
     fill:smooth((t-.81)/.12),
     title:t>=.79
   };
@@ -71,24 +71,12 @@ function prefix(points:readonly Point[],amount:number):Point[]{
   const n=points.length-1,at=clamp(amount)*n,i=Math.floor(at);
   return [...points.slice(0,i+1),mix(points[i],points[Math.min(n,i+1)],at-i)];
 }
-export function foldedThread(points:readonly Point[],amount:number):Point[]{
+// Reveal only the portion of the official contour already drawn.
+export function revealedContour(points:readonly Point[],amount:number):Point[]{
   const p=clamp(amount);
-  if(points.length<2)return points.map(q=>({...q}));
-  if(p===1)return points.map(q=>({...q}));
-  // Every material point starts on the same straight wire and travels to its
-  // arc-length position on the official contour. No appended straight tail,
-  // changing prefix or moving anchor that can snap at a tangent discontinuity.
-  const envelope=4*p*(1-p);
-  return points.map((target,i)=>{
-    const u=i/(points.length-1);
-    const start={x:256-192*u,y:160};
-    // A smooth travelling wave lets one part lead without freezing either end.
-    const local=p+.62*(1-2*u)*p*(1-p);
-    const bow=envelope*(22*Math.sin(Math.PI*u)-12*Math.sin(2*Math.PI*u));
-    const drift=envelope*9*Math.sin(2*Math.PI*u);
-    return {x:lerp(start.x,target.x,local)+drift,
-      y:lerp(start.y,target.y,local)+bow};
-  });
+  if(p===0||points.length===0)return [];
+  if(p===1||points.length===1)return points.map(q=>({...q}));
+  return prefix(points,p);
 }
 export function createLogoIntro(svg:string,dpr:number){
   const {tracks,shape}=readTracks(svg);
@@ -139,12 +127,10 @@ export function createLogoIntro(svg:string,dpr:number){
   // A subtle directional pile along every contour retains relief in the finished mark.
   for(const track of tracks)trace(ink,track.points,8);
   ink.restore();
-  const initial=make();trace(initial.ctx,resample(foldedThread(outer.points,0),1.2),12);
   function draw(ctx:CanvasRenderingContext2D,p:number){
     const {fold,detail,fill}=introTimeline(p);
     ctx.clearRect(0,0,320,320);
-    if(fold===0)ctx.drawImage(initial.c,0,0,320,320);
-    else if(fold<1)trace(ctx,resample(foldedThread(outer.points,fold),1.2),12);
+    if(fold<1)trace(ctx,revealedContour(outer.points,fold),12);
     else{
       ctx.save();ctx.globalAlpha=1-fill;ctx.drawImage(outline.c,0,0,320,320);ctx.restore();
     }
