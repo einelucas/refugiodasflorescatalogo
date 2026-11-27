@@ -22,7 +22,7 @@ export class MeshBuilder{
   // Real radial tube plus short, irregular chenille fibre triangles. All surfaces have normals.
   tube(path:Vec[],radius:number,color:string,seed:number,pile=1){
     if(path.length<2)return;
-    const rnd=seeded(seed),base=hex(color),sides=8;
+    const rnd=seeded(seed),base=hex(color),sides=12;
     const rings:{p:Vec;n:Vec}[][]=[];
     for(let i=0;i<path.length;i++){
       const tangent=norm(sub(path[Math.min(i+1,path.length-1)],path[Math.max(i-1,0)]));
@@ -31,17 +31,27 @@ export class MeshBuilder{
       const ring=[];
       for(let j=0;j<sides;j++){const a=j*TAU/sides,n=add(mul(u,Math.cos(a)),mul(v,Math.sin(a)));ring.push({p:add(path[i],mul(n,radius*(.94+rnd()*.12))),n});}
       rings.push(ring);
-      if(pile>0)for(let j=0;j<8;j++){
-        const a=(j+rnd())*TAU/8,n=add(mul(u,Math.cos(a)),mul(v,Math.sin(a)));
-        const root=add(path[i],mul(n,radius*.78)),side=norm(cross(tangent,n));
-        const tip=add(add(root,mul(n,radius*(.36+rnd()*.54)*pile)),mul(tangent,(rnd()-.5)*radius*.9));
-        const w=radius*(.045+rnd()*.055);
-        this.tri(add(root,mul(side,-w)),add(root,mul(side,w)),tip,n,n,n,mul(base,.80+rnd()*.32));
+      // Short, overlapping curved ribbons approximate soft chenille pile.
+      // Preserve the wire centerline and radius; only the surface fibres change.
+      const count=pile<1?12:18;
+      if(pile>0)for(let j=0;j<count;j++){
+        const a=(j+rnd())*TAU/count,n=add(mul(u,Math.cos(a)),mul(v,Math.sin(a)));
+        const side=norm(cross(tangent,n));
+        const root=add(path[i],add(mul(n,radius*.87),mul(tangent,(rnd()-.5)*radius*.55)));
+        const length=radius*(.26+rnd()*.40)*pile;
+        const lean=(rnd()-.5)*radius*.80;
+        const mid=add(add(root,mul(n,length*.66)),mul(tangent,lean*.32));
+        const tip=add(add(root,mul(n,length)),add(mul(tangent,lean),mul(side,(rnd()-.5)*length*.6)));
+        const w=radius*(.055+rnd()*.045),c=mul(base,.84+rnd()*.30);
+        const left=add(root,mul(side,-w)),right=add(root,mul(side,w));
+        const ml=add(mid,mul(side,-w*.54)),mr=add(mid,mul(side,w*.54));
+        this.tri(left,right,ml,n,n,n,c);this.tri(right,mr,ml,n,n,n,c);
+        this.tri(ml,mr,tip,n,n,n,mul(c,1.06));
       }
     }
     for(let i=1;i<rings.length;i++)for(let j=0;j<sides;j++){
       const a=rings[i-1][j],b=rings[i-1][(j+1)%sides],c=rings[i][j],d=rings[i][(j+1)%sides];
-      const col=mul(base,.90+rnd()*.13);
+      const col=mul(base,.95+rnd()*.08);
       this.tri(a.p,b.p,c.p,a.n,b.n,c.n,col);this.tri(b.p,d.p,c.p,b.n,d.n,c.n,col);
     }
     for(const i of [0,rings.length-1]){
@@ -50,18 +60,20 @@ export class MeshBuilder{
     }
   }
   tuft(center:Vec,r:number,color:string,seed:number){
-    const rnd=seeded(seed),base=hex(color),rows=7,cols=10;
+    const rnd=seeded(seed),base=hex(color),rows=10,cols=14;
     const ring=(i:number,j:number):Vec=>{const a=i*Math.PI/rows,b=j*TAU/cols;return V(Math.sin(a)*Math.cos(b),Math.sin(a)*Math.sin(b),Math.cos(a));};
     for(let i=0;i<rows;i++)for(let j=0;j<cols;j++){
       const a=ring(i,j),b=ring(i+1,j),c=ring(i,j+1),d=ring(i+1,j+1),p=(n:Vec)=>add(center,mul(n,r));
       const col=mul(base,.84+rnd()*.24);
       this.tri(p(a),p(b),p(c),a,b,c,col);this.tri(p(c),p(b),p(d),c,b,d,col);
     }
-    for(let i=0;i<85;i++){
+    for(let i=0;i<160;i++){
       const z=rnd()*2-1,a=rnd()*TAU,k=Math.sqrt(1-z*z),n=V(k*Math.cos(a),k*Math.sin(a),z);
       const u=norm(cross(n,Math.abs(z)>.9?V(0,1,0):V(0,0,1)));
-      const p=add(center,mul(n,r*.85)),tip=add(center,mul(n,r*(1.12+rnd()*.28)));
-      this.tri(add(p,mul(u,-r*.065)),add(p,mul(u,r*.065)),tip,n,n,n,mul(base,.78+rnd()*.34));
+      const p=add(center,mul(n,r*.88)),tip=add(add(center,mul(n,r*(1.10+rnd()*.22))),mul(u,(rnd()-.5)*r*.25));
+      const mid=mix(p,tip,.58),c=mul(base,.80+rnd()*.36),w=r*.045;
+      const l=add(p,mul(u,-w)),rr=add(p,mul(u,w)),ml=add(mid,mul(u,-w*.5)),mr=add(mid,mul(u,w*.5));
+      this.tri(l,rr,ml,n,n,n,c);this.tri(rr,mr,ml,n,n,n,c);this.tri(ml,mr,tip,n,n,n,mul(c,1.06));
     }
   }
 }
