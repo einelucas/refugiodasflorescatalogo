@@ -1,4 +1,4 @@
-import { bezier,clamp,lerp,mix,resample,seeded } from "./paths";
+import { clamp,lerp,mix,resample,seeded } from "./paths";
 import { smooth } from "./sunflower";
 import { createIntroMaterial } from "./logoIntroMaterial";
 import type { Point } from "./types";
@@ -10,14 +10,26 @@ export const INTRO_EXIT=700;
 const center=160,scale=.32;
 type Track={points:Point[];length:number};
 
+// Constant-speed middle section with continuous acceleration/deceleration at its ends.
+// A short ease-in avoids the old long stationary plateau.
+function easeFold(value:number){
+  const t=clamp(value),ramp=.12;
+  if(t<ramp)return t*t/(2*ramp*(1-ramp));
+  if(t>1-ramp)return 1-(1-t)*(1-t)/(2*ramp*(1-ramp));
+  return (t-ramp/2)/(1-ramp);
+}
 export function introTimeline(progress:number){
   const t=clamp(progress);
   return {
-    fold:smooth((t-.10)/.52),
-    detail:smooth((t-.60)/.24),
-    fill:smooth((t-.80)/.10),
+    fold:easeFold((t-.018)/.65),
+    detail:easeFold((t-.54)/.34),
+    fill:smooth((t-.81)/.12),
     title:t>=.79
   };
+}
+// Limit advancement after a dropped mobile frame rather than jumping through poses.
+export function advanceIntroClock(elapsed:number,delta:number){
+  return Math.min(INTRO_DURATION,elapsed+clamp(delta,0,64));
 }
 function readTracks(svg:string):{tracks:Track[];shape:Path2D}{
   const doc=new DOMParser().parseFromString(svg,"image/svg+xml");
@@ -43,24 +55,35 @@ function prefix(points:readonly Point[],amount:number):Point[]{
   return [...points.slice(0,i+1),mix(points[i],points[Math.min(n,i+1)],at-i)];
 }
 export function foldedThread(points:readonly Point[],amount:number):Point[]{
-  const p=clamp(amount),formed=prefix(points,p),tip=formed[formed.length-1];
-  if(p>=1)return formed;
-  // The wire tip is always shared by the completed contour and the free tail.
-  // Blend tangent vectors, not angles, avoiding a discontinuity at +/- PI.
-  const at=Math.floor(p*(points.length-1)),a=points[Math.max(0,at-4)],b=points[Math.min(points.length-1,at+4)];
-  const n=Math.hypot(b.x-a.x,b.y-a.y)||1;
-  const follow=Math.sin(Math.PI*p)*.66;
-  const tangent={x:lerp(-1,(b.x-a.x)/n,follow),y:(b.y-a.y)/n*follow};
-  const length=192*Math.pow(1-p,1.35);
-  const dx=(258-points[0].x)*(1-smooth(p/.35)),dy=(160-points[0].y)*(1-smooth(p/.35));
-  const endpoint={x:clamp(tip.x+length*tangent.x,18-dx,302-dx),y:clamp(tip.y+length*tangent.y+Math.sin(Math.PI*p)*18,18-dy,302-dy)};
-  const control={x:clamp(tip.x+tangent.x*length*.40,18-dx,302-dx),y:clamp(tip.y+tangent.y*length*.40,18-dy,302-dy)};
-  const bend=bezier(tip,control,{x:lerp(tip.x,endpoint.x,.78),y:lerp(tip.y,endpoint.y,.84)},endpoint,Math.max(6,Math.ceil(length/2)));
-  return [...formed,...bend.slice(1)].map(q=>({x:q.x+dx,y:q.y+dy}));
+  const p=clamp(amount);
+  if(points.length<2)return points.map(q=>({...q}));
+  if(p===1)return points.map(q=>({...q}));
+  // Every material point starts on the same straight wire and travels to its
+  // arc-length position on the official contour. No appended straight tail,
+  // changing prefix or moving anchor that can snap at a tangent discontinuity.
+  const envelope=4*p*(1-p);
+  return points.map((target,i)=>{
+    const u=i/(points.length-1);
+    const start={x:256-192*u,y:160};
+    // A smooth travelling wave lets one part lead without freezing either end.
+    const local=p+.62*(1-2*u)*p*(1-p);
+    const bow=envelope*(22*Math.sin(Math.PI*u)-12*Math.sin(2*Math.PI*u));
+    const drift=envelope*9*Math.sin(2*Math.PI*u);
+    return {x:lerp(start.x,target.x,local)+drift,
+      y:lerp(start.y,target.y,local)+bow};
+  });
 }
 export function createLogoIntro(svg:string,dpr:number){
   const {tracks,shape}=readTracks(svg);
   const outer=tracks[0],others=tracks.slice(1),{fibres}=createIntroMaterial();
+  // Bake rotation and scale once: no per-fibre context transforms in each frame.
+  const directions=16;
+  const spriteSize=Math.ceil(20*dpr);
+  const sprites=fibres.map(fibre=>Array.from({length:directions},(_,i)=>{
+    const sprite=document.createElement("canvas");sprite.width=sprite.height=spriteSize;
+    const g=sprite.getContext("2d");if(g){g.translate(spriteSize/2,spriteSize/2);g.rotate(i*Math.PI*2/directions);const side=spriteSize*.60;g.drawImage(fibre,-side/2,-side/2,side,side);}
+    return sprite;
+  }));
   const make=()=>{
     const c=document.createElement("canvas");c.width=c.height=Math.round(INTRO_SIZE*dpr);
     const ctx=c.getContext("2d");if(!ctx)throw new Error("Canvas indisponível");
@@ -75,8 +98,10 @@ export function createLogoIntro(svg:string,dpr:number){
     ctx.strokeStyle="#e1cce9";ctx.lineWidth=size*.34;ctx.stroke();
     for(let i=0;i<points.length;i++){
       const q=points[i],a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)];
-      ctx.save();ctx.translate(q.x,q.y);ctx.rotate(Math.atan2(b.y-a.y,b.x-a.x));
-      ctx.drawImage(fibres[i%fibres.length],-size/2,-size/2,size,size);ctx.restore();
+      const angle=Math.atan2(b.y-a.y,b.x-a.x);
+      const direction=(Math.round(angle*directions/(2*Math.PI))+directions)%directions;
+      const side=size/.60;
+      ctx.drawImage(sprites[i%sprites.length][direction],q.x-side/2,q.y-side/2,side,side);
     }
     ctx.restore();
   }
@@ -90,16 +115,19 @@ export function createLogoIntro(svg:string,dpr:number){
   ink.fillStyle="#c5afd1";ink.fillRect(0,0,320,320);
   for(let y=30;y<290;y+=2.9)for(let x=30;x<290;x+=3.2){
     const s=7+rnd()*2.4;
-    ink.save();ink.translate(x+(rnd()-.5)*2,y+(rnd()-.5)*2);ink.rotate(rnd()*Math.PI);
-    ink.drawImage(fibres[Math.floor(rnd()*fibres.length)],-s/2,-s/2,s,s);ink.restore();
+    const px=x+(rnd()-.5)*2,py=y+(rnd()-.5)*2;
+    const direction=Math.floor(rnd()*directions/2),side=s/.60;
+    ink.drawImage(sprites[Math.floor(rnd()*sprites.length)][direction],px-side/2,py-side/2,side,side);
   }
   // A subtle directional pile along every contour retains relief in the finished mark.
   for(const track of tracks)trace(ink,track.points,8);
   ink.restore();
+  const initial=make();trace(initial.ctx,resample(foldedThread(outer.points,0),1.2),12);
   function draw(ctx:CanvasRenderingContext2D,p:number){
     const {fold,detail,fill}=introTimeline(p);
     ctx.clearRect(0,0,320,320);
-    if(fold<1)trace(ctx,resample(foldedThread(outer.points,fold),1.2),12);
+    if(fold===0)ctx.drawImage(initial.c,0,0,320,320);
+    else if(fold<1)trace(ctx,resample(foldedThread(outer.points,fold),1.2),12);
     else{
       ctx.save();ctx.globalAlpha=1-fill;ctx.drawImage(outline.c,0,0,320,320);ctx.restore();
     }

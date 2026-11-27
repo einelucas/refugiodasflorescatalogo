@@ -1,7 +1,7 @@
 "use client";
 import { useEffect,useRef,useState } from "react";
 import { usePathname } from "next/navigation";
-import { createLogoIntro,INTRO_SIZE,INTRO_DURATION,INTRO_EXIT,introTimeline } from "@/lib/chenille/logoIntro";
+import { createLogoIntro,INTRO_SIZE,INTRO_DURATION,INTRO_EXIT,introTimeline,advanceIntroClock } from "@/lib/chenille/logoIntro";
 import { INTRO_ATTRIBUTE,HOME_READY_ID } from "@/lib/chenille/introBootstrap";
 
 export function ChenilleLogoIntro(){
@@ -71,10 +71,12 @@ export function ChenilleLogoIntro(){
         if(root.getAttribute(INTRO_ATTRIBUTE)!=="pending"){finish();return;}
         root.setAttribute(INTRO_ATTRIBUTE,"playing");
         playTimer=window.setTimeout(finish,INTRO_DURATION+INTRO_EXIT+5000);
-        let start:number|undefined;
+        let elapsed=0,previous:number|undefined;
         const frame=(now:number)=>{
-          if(done)return;start??=now;
-          const p=Math.min(1,(now-start)/INTRO_DURATION);
+          if(done)return;
+          elapsed=advanceIntroClock(elapsed,previous===undefined?0:now-previous);
+          previous=now;
+          const p=elapsed/INTRO_DURATION;
           art.draw(ctx,p);
           if(introTimeline(p).title)canvas.closest(".chenille-logo-intro")?.setAttribute("data-title","true");
           if(p<1)raf=requestAnimationFrame(frame);
